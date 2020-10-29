@@ -15,9 +15,10 @@ class CoAP:
 
     @staticmethod
     def wrap(msg: CoAPMessage) -> bytes:
-        # takes a CoAPMessage object and converts it into  a stream of bytes according to the CoAP protocol
+        # takes a CoAPMessage object and converts it into a stream of bytes according to the CoAP protocol
         coap_header = CoAP.build_header(msg)
-        return coap_header.to_bytes(CoAP.HEADER_LEN, 'big') + msg.data.encode('utf-8')
+        coap_data = 0xFF.to_bytes(1, 'big') + msg.data.encode('utf-8')
+        return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + coap_data
 
     @staticmethod
     def build_header(msg: CoAPMessage) -> int:
@@ -28,6 +29,8 @@ class CoAP:
         header |= (0b111 & msg.msg_class) << CoAP.MSG_CLASS
         header |= (0x1F & msg.msg_code) << CoAP.MSG_CODE
         header |= (0xFFFF & msg.msg_id) << CoAP.MSG_ID
+        if msg.token_length:
+            header = (header << 8 * msg.token_length) | msg.token
         return header
 
 
