@@ -2,12 +2,20 @@ from src.file_system.file_system import File, Directory, FSComponent, FileConten
 
 
 class FileParser:
+
+    def __init__(self):
+        raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
+
     @staticmethod
     def parse(string: str) -> FileContent:
         return FileContent(string[1:])
 
 
 class DirectoryParser:
+
+    def __init__(self):
+        raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
+
     @staticmethod
     def parse(string: str) -> Directory:
         # filter out empty strings in split_str
@@ -23,6 +31,10 @@ class DirectoryParser:
 
 
 class FSParser:
+
+    def __init__(self):
+        raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
+
     @staticmethod
     def parse(string: str) -> FSComponent:
         if string[0] == 'f':
