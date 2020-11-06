@@ -10,9 +10,6 @@ class CoAPMessage:
         self.msg_id = msg_id
         self.token = token
 
-    def as_tuple(self):
-        return self.data, self.msg_type, self.msg_class, self.msg_code, self.msg_id
-
     def __str__(self):
         return f"""[HEADER]: {self.header_version}, [TYPE]: {self.msg_type}, [TOKEN LENGTH]: {self.token_length}, \
 [CLASS]: {self.msg_class}, [CODE]: {self.msg_code}, [ID]: {self.msg_id}
