@@ -2,6 +2,10 @@ from src.client.message_format import CoAPMessage
 
 
 class CoAP:
+    """
+        Containts static methods that encode a specified message.
+        according to the CoAP RFC-7252 specification.
+    """
     HEADER_LEN = 4
     VERSION = 0x1E
     MSG_TYPE = 0x1C
@@ -17,8 +21,8 @@ class CoAP:
     def wrap(msg: CoAPMessage) -> bytes:
         # takes a CoAPMessage object and converts it into a stream of bytes according to the CoAP protocol
         coap_header = CoAP.build_header(msg)
-        coap_data = 0xFF.to_bytes(1, 'big') + msg.data.encode('utf-8')
-        return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + coap_data
+        payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
+        return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + payload
 
     @staticmethod
     def build_header(msg: CoAPMessage) -> int:
