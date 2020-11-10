@@ -7,12 +7,21 @@ class FSCommand(metaclass=abc.ABCMeta):
         Provides infromation about the CoAP header fields associated with the command.
     """
 
+    CMD_BACK = '\x01'
+    CMD_OPEN = '\x02'
+    CMD_SAVE = '\x03'
+    CMD_NEWF = '\x04'
+    CMD_NEWD = '\x05'
+    CMD_DEL = '\x06'
+
+    @staticmethod
     @abc.abstractmethod
-    def get_coap_class(self) -> int:
+    def get_coap_class() -> int:
         pass
 
+    @staticmethod
     @abc.abstractmethod
-    def get_coap_code(self) -> int:
+    def get_coap_code() -> int:
         pass
 
     @abc.abstractmethod
@@ -27,21 +36,22 @@ class BackCommand(FSCommand):
         CoAP format:
             class = 0x1 (Method)
             code = 0x1 (GET)
-            payload = TODO
+            payload = 0x1<dir_name>
     """
 
-    def __init__(self, current_dir: Directory):
-        # TODO: come up with command encoding
-        pass
+    def __init__(self, current_dir: str):
+        self.current_dir = current_dir
 
-    def get_coap_class(self) -> int:
-        return 0x1
+    @staticmethod
+    def get_coap_class() -> int:
+        return 0x0
 
-    def get_coap_code(self) -> int:
+    @staticmethod
+    def get_coap_code() -> int:
         return 0x1
 
     def get_coap_payload(self) -> str:
-        pass
+        return f'{FSCommand.CMD_BACK}{self.current_dir}'
 
 
 class OpenCommand(FSCommand):
@@ -51,21 +61,22 @@ class OpenCommand(FSCommand):
         CoAP format:
             class = 0x1 (Method)
             code = 0x1 (GET)
-            payload = TODO
+            payload = 0x2<component_name>
     """
 
-    def __init__(self, component: FSNamedComponent):
-        # TODO: come up with command encoding
-        pass
+    def __init__(self, component: str):
+        self.component = component
 
-    def get_coap_class(self) -> int:
-        return 0x1
+    @staticmethod
+    def get_coap_class() -> int:
+        return 0x0
 
-    def get_coap_code(self) -> int:
+    @staticmethod
+    def get_coap_code() -> int:
         return 0x1
 
     def get_coap_payload(self) -> str:
-        pass
+        return f'{FSCommand.CMD_OPEN}{self.component}'
 
 
 class SaveCommand(FSCommand):
@@ -75,21 +86,23 @@ class SaveCommand(FSCommand):
         CoAP format:
             class = 0x1 (Method)
             code = 0x2 (POST)
-            payload = TODO
+            payload = 0x3<file_name>0x0<file_content>
     """
 
-    def __init__(self, file: File):
-        # TODO: come up with command encoding
-        pass
+    def __init__(self, file: str, content: str):
+        self.file = file
+        self.content = content
 
-    def get_coap_class(self) -> int:
-        return 0x1
+    @staticmethod
+    def get_coap_class() -> int:
+        return 0x0
 
-    def get_coap_code(self) -> int:
+    @staticmethod
+    def get_coap_code() -> int:
         return 0x1
 
     def get_coap_payload(self) -> str:
-        pass
+        return f'{FSCommand.CMD_SAVE}{self.file}\x00{self.content}'
 
 
 class NewFileCommand(FSCommand):
@@ -99,21 +112,22 @@ class NewFileCommand(FSCommand):
         CoAP format:
             class = 0x1 (Method)
             code = 0x2 (POST)
-            payload = TODO
+            payload = 0x4<file_name>
     """
 
-    def __init__(self, new_file: File):
-        # TODO: come up with command encoding
-        pass
+    def __init__(self, new_file: str):
+        self.new_file = new_file
 
-    def get_coap_class(self) -> int:
-        return 0x1
+    @staticmethod
+    def get_coap_class() -> int:
+        return 0x0
 
-    def get_coap_code(self) -> int:
+    @staticmethod
+    def get_coap_code() -> int:
         return 0x1
 
     def get_coap_payload(self) -> str:
-        pass
+        return f'{FSCommand.CMD_NEWF}{self.new_file}'
 
 
 class NewDirCommand(FSCommand):
@@ -123,21 +137,22 @@ class NewDirCommand(FSCommand):
         CoAP format:
             class = 0x1 (Method)
             code = 0x2 (POST)
-            payload = TODO
+            payload = 0x5<dir_name>
     """
 
     def __init__(self, new_dir: Directory):
-        # TODO: come up with command encoding
-        pass
+        self.new_dir = new_dir
 
-    def get_coap_class(self) -> int:
-        return 0x1
+    @staticmethod
+    def get_coap_class() -> int:
+        return 0x0
 
-    def get_coap_code(self) -> int:
+    @staticmethod
+    def get_coap_code() -> int:
         return 0x1
 
     def get_coap_payload(self) -> str:
-        pass
+        return f'{FSCommand.CMD_NEWD}{self.new_dir}'
 
 
 class DeleteCommand(FSCommand):
@@ -147,18 +162,19 @@ class DeleteCommand(FSCommand):
         CoAP format:
             class = 0x1 (Method)
             code = 0x4 (DELETE)
-            payload = TODO
+            payload = 0x5<component_name>
     """
 
     def __init__(self, component: FSNamedComponent):
-        # TODO: come up with command encoding
-        pass
+        self.component = component
 
-    def get_coap_class(self) -> int:
-        return 0x1
+    @staticmethod
+    def get_coap_class() -> int:
+        return 0x0
 
-    def get_coap_code(self) -> int:
+    @staticmethod
+    def get_coap_code() -> int:
         return 0x1
 
     def get_coap_payload(self) -> str:
-        pass
+        return f'{FSCommand.CMD_DEL}{self.component}'

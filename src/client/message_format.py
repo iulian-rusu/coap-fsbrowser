@@ -1,7 +1,7 @@
 class CoAPMessage:
     """
-        Incapsulates a CoAP-style message, providing an easy means of accessing all header fields.
-        Is also responsible for validating incorrect message formats and throws exceptions.
+        Encapsulates a CoAP-style message, providing an easy means of accessing all header fields.
+        Is responsible for validating messages and throws exceptions in case of incorrect formats.
     """
     def __init__(self, payload: str, msg_type: int, msg_class: int, msg_code: int, msg_id: int,
                  header_version=0x1, token_length=0x0, token=0x0):
@@ -22,7 +22,10 @@ class CoAPMessage:
 
     @staticmethod
     def from_bytes(data_bytes: bytes):
-        # creates a CoAPMessage from bytes encoded using the CoAP protocol
+        """
+            Creates a CoAPMessage from bytes encoded using the CoAP protocol.
+            This method will also check any format inconsistencies according to RFC-7252 and will throw FormatException.
+        """
         header_bytes = data_bytes[0:4]
         header_version = (0xC0 & header_bytes[0]) >> 6
         msg_type = (0x30 & header_bytes[0]) >> 4
@@ -30,9 +33,13 @@ class CoAPMessage:
         msg_class = (header_bytes[1] >> 5) & 0x07
         msg_code = (header_bytes[1] >> 0) & 0x1F
         msg_id = (header_bytes[2] << 8) | header_bytes[3]
-        if header_version != 0x1 or (9 <= token_length <= 15) or msg_class in (1, 6, 7):
-            # message must have correct header version, token length and class
-            raise FormatException("Incorrect CoAP header format")
+        # message must have correct header version, token length and class
+        if header_version != 0x1:
+            raise FormatException("Message has incorrect CoAP header version")
+        elif 9 <= token_length <= 15:
+            raise FormatException("Message has incorrect CoAP token length")
+        elif msg_class in (1, 6, 7):
+            raise FormatException("Message uses reserved CoAP message class")
         # check special message types/classes/codes
         if (msg_class == 0x0 and msg_code == 0x0) or msg_type == 0x3:
             # message must be emtpy
