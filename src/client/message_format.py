@@ -65,3 +65,6 @@ class CoAPMessage:
 class FormatException(Exception):
     def __init__(self, msg: str):
         super().__init__(msg)
+
+    def __str__(self):
+        return f"(FORMAT EXCEPTION) {super().__str__()}"
