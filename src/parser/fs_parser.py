@@ -1,4 +1,4 @@
-from src.client.message_format import FormatException
+from src.client.exceptions import InvalidFormat
 from src.file_system.file_system import File, Directory, FSComponent, FileContent
 
 
@@ -27,7 +27,7 @@ class DirectoryParser:
             elif child[0] == 'd':
                 directory.add_child(Directory(child[1:]))
             else:
-                raise FormatException("Error parsing directory data")
+                raise InvalidFormat("Error parsing directory data")
         return directory
 
 
@@ -48,4 +48,4 @@ class FSParser:
         elif string[0] == 'd':
             return DirectoryParser.parse(string)
         else:
-            raise FormatException("Error parsing file system data")
+            raise InvalidFormat("Error parsing file system data")

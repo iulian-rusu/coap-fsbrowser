@@ -1,3 +1,6 @@
+from src.client.exceptions import InvalidFormat
+
+
 class CoAPMessage:
     """
         Encapsulates a CoAP-style message, providing an easy means of accessing all header fields.
@@ -35,19 +38,19 @@ class CoAPMessage:
         msg_id = (header_bytes[2] << 8) | header_bytes[3]
         # message must have correct header version, token length and class
         if header_version != 0x1:
-            raise FormatException("Message has incorrect CoAP header version")
+            raise InvalidFormat("Message has incorrect CoAP header version")
         elif 9 <= token_length <= 15:
-            raise FormatException("Message has incorrect CoAP token length")
+            raise InvalidFormat("Message has incorrect CoAP token length")
         elif msg_class in (1, 6, 7):
-            raise FormatException("Message uses reserved CoAP message class")
+            raise InvalidFormat("Message uses reserved CoAP message class")
         # check special message types/classes/codes
         if (msg_class == 0x0 and msg_code == 0x0) or msg_type == 0x3:
             # message must be emtpy
             if not CoAPMessage.is_empty(msg_class, msg_code, token_length, data_bytes):
-                raise FormatException("Incorrect format for EMPTY CoAP message")
+                raise InvalidFormat("Incorrect format for EMPTY CoAP message")
             # empty message must be non-confirmable
             if msg_type == 0x1:
-                raise FormatException("Non-confirmable CoAP message cannot be EMPTY")
+                raise InvalidFormat("Non-confirmable CoAP message cannot be EMPTY")
         token = 0x0
         # if there is a token, read it
         if token_length:
@@ -60,11 +63,3 @@ class CoAPMessage:
     @staticmethod
     def is_empty(msg_class: int, msg_code: int, token_length: int, data_bytes: bytes) -> bool:
         return msg_class == 0x0 and msg_code == 0x0 and token_length == 0x0 and len(data_bytes) == 4
-
-
-class FormatException(Exception):
-    def __init__(self, msg: str):
-        super().__init__(msg)
-
-    def __str__(self):
-        return f"(FORMAT EXCEPTION) {super().__str__()}"
