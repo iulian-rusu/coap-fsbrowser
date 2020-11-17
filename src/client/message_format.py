@@ -3,8 +3,8 @@ from src.client.exceptions import InvalidFormat
 
 class CoAPMessage:
     """
-        Encapsulates a CoAP-style message, providing an easy means of accessing all header fields.
-        Is responsible for validating messages and throws exceptions in case of incorrect formats.
+    Encapsulates a CoAP-style message, providing an easy means of accessing all header fields.
+    Is responsible for validating messages and throws exceptions in case of incorrect formats.
     """
     def __init__(self, payload: str, msg_type: int, msg_class: int, msg_code: int, msg_id: int,
                  header_version=0x1, token_length=0x0, token=0x0):
@@ -26,8 +26,10 @@ class CoAPMessage:
     @staticmethod
     def from_bytes(data_bytes: bytes):
         """
-            Creates a CoAPMessage from bytes encoded using the CoAP protocol.
-            This method will also check any format inconsistencies according to RFC-7252 and will throw FormatException.
+        Creates a CoAPMessage from bytes encoded using the CoAP protocol.
+        This method will also check any format inconsistencies according to RFC-7252 and will throw FormatException.
+
+        :param data_bytes: The bytes that encode the message.
         """
         header_bytes = data_bytes[0:4]
         header_version = (0xC0 & header_bytes[0]) >> 6

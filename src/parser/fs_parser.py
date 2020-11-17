@@ -33,10 +33,10 @@ class DirectoryParser:
 
 class FSParser:
     """
-        Class that is responsible for parsing encoded file system information.
-        The FSParser.parse static method receives an encoded string
-        representing the contents of the current directory/file and returns
-        the FSComponent encoded in it.
+    Class that is responsible for parsing encoded file system information.
+    The FSParser.parse static method receives an encoded string
+    representing the contents of the current directory/file and returns
+    the FSComponent encoded in it.
     """
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")

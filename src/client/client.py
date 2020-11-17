@@ -8,20 +8,21 @@ from typing import Tuple, Any, Optional
 from src.client.exceptions import InvalidResponse
 from src.client.message_format import CoAPMessage
 from src.client.protocol import CoAP
+from src.command.command import FSCommand
 
 
 class Client:
     """
-        Implements the client end of the client-server communication.
-        The run() method is blocking so it's recommended to run it in a separate thread.
-        The communication with other threads is done via message queues.
+    Implements the client end of the client-server communication.
+    The run() method is blocking so it's recommended to run it in a separate thread.
+    The communication with other threads is done via message queues.
     """
     MSG_BUFFER_SIZE = 1024
     MAX_RESEND_ATTEMPTS = 16
     SOCK_TIMEOUT = 2
     QUEUE_TIMEOUT = 1
 
-    def __init__(self, server_ip: str, server_port: int, msg_queue: queue.Queue = None):
+    def __init__(self, server_ip: str, server_port: int, msg_queue: 'queue.Queue[FSCommand]' = None):
         self.socket_inst = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.socket_inst.settimeout(Client.SOCK_TIMEOUT)
         self.msg_queue = msg_queue
@@ -34,16 +35,16 @@ class Client:
         # initialize logger
         self.logger = logging.Logger(name='CLIENT', level=logging.INFO)
         file_handler = logging.FileHandler('client_log.txt')
-        formatter = logging.Formatter('[%(levelname)s]<%(name)s@%(asctime)s>: %(message)s')
+        formatter = logging.Formatter('<%(name)s@%(asctime)s>:%(levelname)-8s%(message)s')
         file_handler.setFormatter(formatter)
-        file_handler.setLevel(logging.INFO)
+        file_handler.setLevel(logging.DEBUG)
         self.logger.addHandler(file_handler)
 
     def run(self):
         """
-            Runs the client-server communication. Messages are received from the message queue.
-            The client will wait for a response before sending another message from the queue,
-            unless the server takes too long or sends too many invalid responses.
+        Runs the client-server communication. Messages are received from the message queue.
+        The client will wait for a response before sending another message from the queue,
+        unless the server takes too long or sends too many invalid responses.
         """
         self.is_running = True
         while self.is_running:
@@ -61,16 +62,21 @@ class Client:
             coap_response = self.send_and_receive(payload=payload, msg_class=msg_class,
                                                   msg_code=msg_code, msg_type=msg_type)
             if coap_response:
-                # TODO: do something useful with the response
-                self.logger.info(CoAP.wrap(coap_response).hex(sep=' ', bytes_per_sep=1))
+                self.process_response(coap_response, cmd)
 
     def send_and_receive(self, payload: str, msg_type: int, msg_class: int, msg_code: int) -> Optional[CoAPMessage]:
         """
-            Sends a CoAP message to the server until the received response is correct or until the client runs out of
-            resend attempts.
-            A correct response has a matching tokken and a piggybacked acknowledge in case of confirmable requests.
-            Any incorrect response will trigger a retransmission attempt, up to a set maximum amount of retransmissions.
-            If the server does not send any response during the socket timoeut period, the transmission will be aborted.
+        Sends a CoAP message to the server until the received response is correct or until the client runs out of
+        resend attempts.
+        A correct response has a matching tokken and a piggybacked acknowledge in case of confirmable requests.
+        Any incorrect response will trigger a retransmission attempt, up to a set maximum amount of retransmissions.
+        If the server does not send any response during the socket timoeut period, the transmission will be aborted.
+
+        :param payload: The payload (body) of the message to be sent.
+        :param msg_type: The type of the message to be sent.
+        :param msg_class: The class of the message to be sent.
+        :param msg_code: The code of the message to be sent.
+        :return: Optional[CoAPMessage] - returns None in case of errors.
         """
         self.last_msg_id += 1
         self.last_token = Client.generate_token()
@@ -105,6 +111,30 @@ class Client:
         # something wrong - return nothing
         return None
 
+    def process_response(self, coap_response: CoAPMessage, cmd: FSCommand):
+        """
+        Checks the response code and executes the command in case of OK response.
+        Any errors or unknown responses are logged.
+
+        :param coap_response: The response from the server.
+        :param cmd: The current comand awaiting response.
+        :return: None
+        """
+        response_code = 100*coap_response.msg_class + coap_response.msg_code
+        if coap_response.msg_class == 2:
+            self.logger.info(f'(RESPONSE) Success: {response_code}')
+            # all good - execute the command locally to be up to date with the server
+            cmd.exec(coap_response)
+        elif coap_response.msg_class == 4:
+            # client error
+            self.logger.error(f'(RESPONSE) Client error: {response_code}')
+        elif coap_response.msg_class == 5:
+            # server error
+            self.logger.error(f'(RESPONSE) Server error: {response_code}')
+        else:
+            # other response classes not recognized/implemented
+            self.logger.warning(f'Could not identify server response: {response_code}')
+
     def send_message(self, coap_msg: CoAPMessage):
         # wrap it using CoAP and send it
         coap_data = CoAP.wrap(coap_msg)
@@ -125,6 +155,7 @@ class Client:
             self.socket_inst.settimeout(Client.SOCK_TIMEOUT)
 
     def send_bytes(self, msg: bytes, ip: str, port: int):
+        self.logger.info(f"(REQUEST) {msg.hex(sep=' ', bytes_per_sep=1)}")
         self.socket_inst.sendto(msg, (ip, port))
 
     def recv_bytes(self, amount: int) -> Tuple[bytes, Any]:
