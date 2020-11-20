@@ -38,6 +38,7 @@ class FSParser:
     representing the contents of the current directory/file and returns
     the FSComponent encoded in it.
     """
+
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
 

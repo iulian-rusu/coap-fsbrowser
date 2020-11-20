@@ -1,4 +1,4 @@
-from src.client.message_format import CoAPMessage
+from src.client.coap_message import CoAPMessage
 
 
 class CoAP:
@@ -6,6 +6,7 @@ class CoAP:
     Containts static methods that encode a specified message.
     according to the CoAP RFC-7252 specification.
     """
+
     HEADER_LEN = 4
     VERSION = 0x1E
     MSG_TYPE = 0x1C
@@ -27,7 +28,9 @@ class CoAP:
         """
 
         coap_header = CoAP.build_header(msg)
-        payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
+        payload = ''
+        if len(msg.payload):
+            payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
         return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + payload
 
     @staticmethod

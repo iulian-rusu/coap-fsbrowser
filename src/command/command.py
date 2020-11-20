@@ -1,4 +1,4 @@
-from src.client.message_format import CoAPMessage
+from src.client.coap_message import CoAPMessage
 from src.file_system.file_system import *
 from typing import Callable
 
@@ -202,9 +202,9 @@ class NewDirCommand(FSCommand):
         payload = <code><dir_name>
     """
 
-    def __init__(self, new_dir: Directory, callback: Callable = None):
+    def __init__(self, new_dir_name: str, callback: Callable = None):
         super().__init__(callback)
-        self.new_dir = new_dir
+        self.new_dir_name = new_dir_name
 
     @staticmethod
     def get_coap_class() -> int:
@@ -215,7 +215,7 @@ class NewDirCommand(FSCommand):
         return 0x1
 
     def get_coap_payload(self) -> str:
-        return f'{FSCommand.CMD_NEWD}{self.new_dir}'
+        return f'{FSCommand.CMD_NEWD}{self.new_dir_name}'
 
     def exec(self, coap_response: CoAPMessage):
         if self.callback:
@@ -236,9 +236,9 @@ class DeleteCommand(FSCommand):
         payload = <code><component_name>
     """
 
-    def __init__(self, component: FSNamedComponent, callback: Callable = None):
+    def __init__(self, component_name: str, callback: Callable = None):
         super().__init__(callback)
-        self.component = component
+        self.component_name = component_name
 
     @staticmethod
     def get_coap_class() -> int:
@@ -249,7 +249,7 @@ class DeleteCommand(FSCommand):
         return 0x1
 
     def get_coap_payload(self) -> str:
-        return f'{FSCommand.CMD_DEL}{self.component}'
+        return f'{FSCommand.CMD_DEL}{self.component_name}'
 
     def exec(self, coap_response: CoAPMessage):
         if self.callback:

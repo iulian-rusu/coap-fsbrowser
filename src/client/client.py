@@ -6,7 +6,7 @@ import queue
 from typing import Tuple, Any, Optional
 
 from src.client.exceptions import InvalidResponse
-from src.client.message_format import CoAPMessage
+from src.client.coap_message import CoAPMessage
 from src.client.protocol import CoAP
 from src.command.command import FSCommand
 
@@ -17,6 +17,7 @@ class Client:
     The run() method is blocking so it's recommended to run it in a separate thread.
     The communication with other threads is done via message queues.
     """
+
     MSG_BUFFER_SIZE = 1024
     MAX_RESEND_ATTEMPTS = 16
     SOCK_TIMEOUT = 2
