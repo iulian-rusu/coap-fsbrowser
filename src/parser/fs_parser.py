@@ -1,8 +1,8 @@
+from src.client.exceptions import InvalidFormat
 from src.file_system.file_system import File, Directory, FSComponent, FileContent
 
 
 class FileParser:
-
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
 
@@ -12,7 +12,6 @@ class FileParser:
 
 
 class DirectoryParser:
-
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
 
@@ -27,10 +26,18 @@ class DirectoryParser:
                 directory.add_child(File(child[1:], FileContent()))
             elif child[0] == 'd':
                 directory.add_child(Directory(child[1:]))
+            else:
+                raise InvalidFormat("Error parsing directory data")
         return directory
 
 
 class FSParser:
+    """
+    Class that is responsible for parsing encoded file system information.
+    The FSParser.parse static method receives an encoded string
+    representing the contents of the current directory/file and returns
+    the FSComponent encoded in it.
+    """
 
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
@@ -41,3 +48,5 @@ class FSParser:
             return FileParser.parse(string)
         elif string[0] == 'd':
             return DirectoryParser.parse(string)
+        else:
+            raise InvalidFormat("Error parsing file system data")
