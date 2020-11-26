@@ -18,14 +18,14 @@ class CoAPMessage:
         self.msg_id = msg_id
         self.token = token
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"""[HEADER]: {self.header_version}, [TYPE]: {self.msg_type}, [TOKEN LENGTH]: {self.token_length}, \
 [CLASS]: {self.msg_class}, [CODE]: {self.msg_code}, [ID]: {self.msg_id}
 [TOKEN]: {hex(self.token) if self.token_length else ''}
 [DATA]: {self.payload}\n"""
 
-    @staticmethod
-    def from_bytes(data_bytes: bytes):
+    @classmethod
+    def from_bytes(cls, data_bytes: bytes) -> 'CoAPMessage':
         """
         Creates a CoAPMessage from bytes encoded using the CoAP protocol.
         This method will also check any format inconsistencies according to RFC-7252 and will throw FormatException.
@@ -55,13 +55,11 @@ class CoAPMessage:
             if msg_type == 0x1:
                 raise InvalidFormat("Non-confirmable CoAP message cannot be EMPTY")
         token = 0x0
-        # if there is a token, read it
         if token_length:
             token = int.from_bytes(data_bytes[4:4 + token_length], 'big')
-        # read the message payload
         payload = data_bytes[5 + token_length:].decode('utf-8')
-        return CoAPMessage(payload, msg_type, msg_class, msg_code, msg_id,
-                           header_version=header_version, token_length=token_length, token=token)
+        return cls(payload, msg_type, msg_class, msg_code, msg_id,
+                   header_version=header_version, token_length=token_length, token=token)
 
     @staticmethod
     def is_empty(msg_class: int, msg_code: int, token_length: int, data_bytes: bytes) -> bool:

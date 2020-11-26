@@ -34,9 +34,9 @@ class FSCommand(metaclass=abc.ABCMeta):
     def get_coap_code() -> int:
         pass
 
-    @abc.abstractmethod
-    def get_coap_payload(self) -> str:
-        pass
+    @property
+    def coap_payload(self) -> str:
+        raise NotImplementedError('Attempt to access property of abstract base class FSCommand')
 
     @abc.abstractmethod
     def exec(self, coap_response: CoAPMessage):
@@ -75,7 +75,8 @@ class BackCommand(FSCommand):
     def get_coap_code() -> int:
         return 0x1
 
-    def get_coap_payload(self) -> str:
+    @property
+    def coap_payload(self) -> str:
         return f'{FSCommand.CMD_BACK}{self.current_dir_name}'
 
     def exec(self, coap_response: CoAPMessage):
@@ -110,7 +111,8 @@ class OpenCommand(FSCommand):
     def get_coap_code() -> int:
         return 0x1
 
-    def get_coap_payload(self) -> str:
+    @property
+    def coap_payload(self) -> str:
         return f'{FSCommand.CMD_OPEN}{self.component_name}'
 
     def exec(self, coap_response: CoAPMessage):
@@ -123,7 +125,7 @@ class OpenCommand(FSCommand):
 class SaveCommand(FSCommand):
     """
     Class that implements the SAVE command.
-    Allows the user to open a directory or file.
+    Allows the user to save the state of the opened file.
 
     CoAP format:
         class = 0x1 (Method)
@@ -146,7 +148,8 @@ class SaveCommand(FSCommand):
     def get_coap_code() -> int:
         return 0x1
 
-    def get_coap_payload(self) -> str:
+    @property
+    def coap_payload(self) -> str:
         return f'{FSCommand.CMD_SAVE}{self.file_name}\x00{self.content}'
 
     def exec(self, coap_response: CoAPMessage):
@@ -180,7 +183,8 @@ class NewFileCommand(FSCommand):
     def get_coap_code() -> int:
         return 0x1
 
-    def get_coap_payload(self) -> str:
+    @property
+    def coap_payload(self) -> str:
         return f'{FSCommand.CMD_NEWF}{self.new_file_name}'
 
     def exec(self, coap_response: CoAPMessage):
@@ -214,7 +218,8 @@ class NewDirCommand(FSCommand):
     def get_coap_code() -> int:
         return 0x1
 
-    def get_coap_payload(self) -> str:
+    @property
+    def coap_payload(self) -> str:
         return f'{FSCommand.CMD_NEWD}{self.new_dir_name}'
 
     def exec(self, coap_response: CoAPMessage):
@@ -248,7 +253,8 @@ class DeleteCommand(FSCommand):
     def get_coap_code() -> int:
         return 0x1
 
-    def get_coap_payload(self) -> str:
+    @property
+    def coap_payload(self) -> str:
         return f'{FSCommand.CMD_DEL}{self.component_name}'
 
     def exec(self, coap_response: CoAPMessage):

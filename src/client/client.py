@@ -59,7 +59,7 @@ class Client:
             msg_type = 0x0 if self.confirmation_req else 0x1
             msg_class = cmd.get_coap_class()
             msg_code = cmd.get_coap_code()
-            payload = cmd.get_coap_payload()
+            payload = cmd.coap_payload
             coap_response = self.send_and_receive(payload=payload, msg_class=msg_class,
                                                   msg_code=msg_code, msg_type=msg_type)
             if coap_response:
@@ -121,6 +121,7 @@ class Client:
         :param cmd: The current comand awaiting response.
         :return: None
         """
+        print(coap_response)
         response_code = 100*coap_response.msg_class + coap_response.msg_code
         if coap_response.msg_class == 2:
             self.logger.info(f'(RESPONSE) Success: {response_code}')

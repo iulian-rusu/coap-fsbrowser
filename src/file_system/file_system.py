@@ -1,47 +1,70 @@
 import abc
+from typing import Callable
 
 
 class FSComponent(metaclass=abc.ABCMeta):
+
     @abc.abstractmethod
     def __str__(self) -> str:
         pass
 
+    @staticmethod
     @abc.abstractmethod
-    def get_type(self) -> str:
+    def get_type() -> str:
         pass
 
 
 class FileContent(FSComponent):
+
     def __init__(self, content: str = ''):
         self.content = content
 
     def __str__(self) -> str:
         return f"[FILE CONTENT]: {self.content if len(self.content) else '<empty>'}"
 
-    def get_type(self) -> str:
+    @staticmethod
+    def get_type() -> str:
         return "[FILE CONTENT]"
 
 
 class FSNamedComponent(FSComponent, abc.ABC):
-    def __init__(self, name: str):
+    """
+    Abstract base class for file system components with names.
+    This type of component is displayed in the GUI by its name.
+    When the user opens the component, the opening strategy associated with it
+    will be called, which will handle the opening and displaying of the component
+    in the correct format.
+    """
+
+    def __init__(self, name: str, opening_strategy: Callable):
         self.name = name
+        self._opening_strategy = opening_strategy
+
+    @property
+    def opening_strategy(self) -> Callable:
+        if self._opening_strategy:
+            return self._opening_strategy
+        raise NotImplementedError("Component has no opening strategy")
 
 
 class File(FSNamedComponent):
-    def __init__(self, name: str, content: FileContent = FileContent()):
-        super().__init__(name)
+
+    def __init__(self, name: str, content: FileContent = FileContent(), opening_strategy: Callable = None):
+        super().__init__(name, opening_strategy)
         self.content = content
 
     def __str__(self) -> str:
         return f"[FILE]: {self.name} {self.content}"
 
-    def get_type(self) -> str:
+    @staticmethod
+    def get_type() -> str:
         return "[FILE]"
 
 
 class Directory(FSNamedComponent):
-    def __init__(self, name: str):
-        super().__init__(name)
+
+    def __init__(self, name: str, opening_strategy: Callable = None):
+        super().__init__(name, opening_strategy)
         self.children = []
 
     def add_child(self, child: FSNamedComponent):
@@ -54,5 +77,6 @@ class Directory(FSNamedComponent):
                 result += f"\n\t|--{child.get_type()}: {child.name}"
         return result
 
-    def get_type(self) -> str:
+    @staticmethod
+    def get_type() -> str:
         return "[DIRECTORY]"

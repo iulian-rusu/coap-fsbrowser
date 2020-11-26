@@ -3,6 +3,7 @@ from src.file_system.file_system import File, Directory, FSComponent, FileConten
 
 
 class FileParser:
+
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
 
@@ -12,22 +13,23 @@ class FileParser:
 
 
 class DirectoryParser:
+
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
 
     @staticmethod
     def parse(string: str) -> Directory:
-        # filter out empty strings in split_str
+        # split the input and remove any empty strings
         split_str = list(filter(lambda x: x != '', string[1:].split('\x00')))
         directory = Directory(split_str[0])
 
         for child in split_str[1:]:
             if child[0] == 'f':
-                directory.add_child(File(child[1:], FileContent()))
+                directory.add_child(File(child[1:]))
             elif child[0] == 'd':
                 directory.add_child(Directory(child[1:]))
             else:
-                raise InvalidFormat("Error parsing directory data")
+                raise InvalidFormat("Invalid header for directory child")
         return directory
 
 
@@ -49,4 +51,4 @@ class FSParser:
         elif string[0] == 'd':
             return DirectoryParser.parse(string)
         else:
-            raise InvalidFormat("Error parsing file system data")
+            raise InvalidFormat("Invalid header for file system component")

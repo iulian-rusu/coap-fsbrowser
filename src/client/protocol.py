@@ -28,7 +28,7 @@ class CoAP:
         """
 
         coap_header = CoAP.build_header(msg)
-        payload = ''
+        payload = b''
         if len(msg.payload):
             payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
         return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + payload
