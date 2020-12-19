@@ -3,7 +3,7 @@ import socket
 import random
 import math
 import queue
-from typing import Tuple, Any, Optional
+from typing import Optional
 
 from src.client.exceptions import InvalidResponse
 from src.client.coap_message import CoAPMessage
@@ -18,7 +18,7 @@ class Client:
     The communication with other threads is done via message queues.
     """
 
-    MSG_BUFFER_SIZE = 1024
+    MSG_BUFFER_SIZE = 65535
     MAX_RESEND_ATTEMPTS = 16
     SOCK_TIMEOUT = 2
     QUEUE_TIMEOUT = 1
@@ -84,8 +84,6 @@ class Client:
         token_length = int(math.ceil(math.log(self.last_token, 8)))
         coap_msg = CoAPMessage(payload=payload, msg_type=msg_type, msg_class=msg_class, msg_code=msg_code,
                                msg_id=self.last_msg_id, token_length=token_length, token=self.last_token)
-        # clear any late responses from previous requests
-        self.empty_socket()
         send_again = True
         attempts = Client.MAX_RESEND_ATTEMPTS
         while send_again:
@@ -122,7 +120,7 @@ class Client:
         :return: None
         """
         print(coap_response)
-        response_code = 100*coap_response.msg_class + coap_response.msg_code
+        response_code = 100 * coap_response.msg_class + coap_response.msg_code
         if coap_response.msg_class == 2:
             self.logger.info(f'(RESPONSE) Success: {response_code}')
             # all good - execute the command locally to be up to date with the server
@@ -138,30 +136,19 @@ class Client:
             self.logger.warning(f'Could not identify server response: {response_code}')
 
     def send_message(self, coap_msg: CoAPMessage):
-        # wrap it using CoAP and send it
         coap_data = CoAP.wrap(coap_msg)
         self.send_bytes(coap_data, self.server_ip, self.server_port)
 
     def recv_message(self) -> CoAPMessage:
-        # receives bytes from the server and returns a CoAPMessage object
-        coap_bytes, server = self.recv_bytes(Client.MSG_BUFFER_SIZE)
+        coap_bytes = self.recv_bytes()
         return CoAPMessage.from_bytes(coap_bytes)
-
-    def empty_socket(self):
-        # clears any data left in the internal input buffer of the socket
-        try:
-            self.socket_inst.settimeout(0)
-            while True:
-                self.socket_inst.recvfrom(Client.MSG_BUFFER_SIZE)
-        except (socket.timeout, BlockingIOError):
-            self.socket_inst.settimeout(Client.SOCK_TIMEOUT)
 
     def send_bytes(self, msg: bytes, ip: str, port: int):
         self.logger.info(f"(REQUEST) {msg.hex(sep=' ', bytes_per_sep=1)}")
         self.socket_inst.sendto(msg, (ip, port))
 
-    def recv_bytes(self, amount: int) -> Tuple[bytes, Any]:
-        return self.socket_inst.recvfrom(amount)
+    def recv_bytes(self) -> bytes:
+        return self.socket_inst.recv(Client.MSG_BUFFER_SIZE)
 
     @staticmethod
     def generate_token() -> int:
