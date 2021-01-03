@@ -1,5 +1,4 @@
-from src.client.coap_message import CoAPMessage
-from src.file_system.file_system import *
+import abc
 from typing import Callable
 
 from src.parser.fs_parser import FSParser
@@ -39,12 +38,12 @@ class FSCommand(metaclass=abc.ABCMeta):
         raise NotImplementedError('Attempt to access property of abstract base class FSCommand')
 
     @abc.abstractmethod
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         """
         Called once the client has reveived an OK repsonse from the server.
         Executes the command on the client-side by means of a given callback function.
 
-        :param coap_response: The response from the server, may be unused in the callback.
+        :param response_data: The response from the server, may be unused in the callback.
         :return: None
         """
         pass
@@ -79,10 +78,10 @@ class BackCommand(FSCommand):
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_BACK}{self.current_dir_name}'
 
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         if self.callback:
             # parse response and get the directory to go to
-            new_dir = FSParser.parse(coap_response.payload)
+            new_dir = FSParser.parse(response_data)
             self.callback(new_dir)
 
 
@@ -115,10 +114,10 @@ class OpenCommand(FSCommand):
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_OPEN}{self.component_name}'
 
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         if self.callback:
             # parse response and get the component to be opened
-            to_open = FSParser.parse(coap_response.payload)
+            to_open = FSParser.parse(response_data)
             self.callback(to_open)
 
 
@@ -152,7 +151,7 @@ class SaveCommand(FSCommand):
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_SAVE}{self.file_name}\x00{self.content}'
 
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         if self.callback:
             # no need to parse the response, just save the current file content
             self.callback()
@@ -187,7 +186,7 @@ class NewFileCommand(FSCommand):
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_NEWF}{self.new_file_name}'
 
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         if self.callback:
             # no need to parse the response, just create an empty file
             self.callback()
@@ -222,7 +221,7 @@ class NewDirCommand(FSCommand):
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_NEWD}{self.new_dir_name}'
 
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         if self.callback:
             # no need to parse the response, just create an empty directory
             self.callback()
@@ -257,7 +256,7 @@ class DeleteCommand(FSCommand):
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_DEL}{self.component_name}'
 
-    def exec(self, coap_response: CoAPMessage):
+    def exec(self, response_data: str):
         if self.callback:
             # no need to parse the response, just delete component
             self.callback()

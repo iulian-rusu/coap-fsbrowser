@@ -20,14 +20,14 @@ class Client:
 
     MSG_BUFFER_SIZE = 65535
     MAX_RESEND_ATTEMPTS = 16
-    SOCK_TIMEOUT = 2
-    QUEUE_TIMEOUT = 1
+    SOCK_TIMEOUT = 1.0
+    QUEUE_TIMEOUT = 1.0
 
     def __init__(self, server_ip: str, server_port: int, msg_queue: 'queue.Queue[FSCommand]' = None):
         self.socket_inst = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.socket_inst.settimeout(Client.SOCK_TIMEOUT)
         self.msg_queue = msg_queue
-        self.server_ip = server_ip
+        self.server_ip = socket.gethostbyname(server_ip)
         self.server_port = server_port
         self.last_msg_id = 0
         self.last_token = None
@@ -91,8 +91,9 @@ class Client:
             self.send_message(coap_msg)
             try:
                 coap_response = self.recv_message()
-                if self.last_token != coap_response.token:
-                    raise InvalidResponse("Received token did not match")
+                while self.last_token != coap_response.token:
+                    # ignore responses with incorrect token
+                    coap_response = self.recv_message()
                 if self.confirmation_req and self.last_msg_id != coap_response.msg_id:
                     raise InvalidResponse("Acknowledge message id did not match")
                 # all good - return message
@@ -124,7 +125,7 @@ class Client:
         if coap_response.msg_class == 2:
             self.logger.info(f'(RESPONSE) Success: {response_code}')
             # all good - execute the command locally to be up to date with the server
-            cmd.exec(coap_response)
+            cmd.exec(coap_response.payload)
         elif coap_response.msg_class == 4:
             # client error
             self.logger.error(f'(RESPONSE) Client error: {response_code}')

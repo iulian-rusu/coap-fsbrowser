@@ -1,5 +1,5 @@
 import abc
-from typing import Callable
+import tkinter as tk
 
 
 class FSComponent(metaclass=abc.ABCMeta):
@@ -11,6 +11,10 @@ class FSComponent(metaclass=abc.ABCMeta):
     @staticmethod
     @abc.abstractmethod
     def get_type() -> str:
+        pass
+
+    @abc.abstractmethod
+    def open(self, browser_page):
         pass
 
 
@@ -26,6 +30,11 @@ class FileContent(FSComponent):
     def get_type() -> str:
         return "[FILE CONTENT]"
 
+    def open(self, browser_page):
+        file = browser_page.selected_component
+        file.content = self
+        file.open(browser_page)
+
 
 class FSNamedComponent(FSComponent, abc.ABC):
     """
@@ -36,21 +45,14 @@ class FSNamedComponent(FSComponent, abc.ABC):
     in the correct format.
     """
 
-    def __init__(self, name: str, opening_strategy: Callable):
+    def __init__(self, name: str):
         self.name = name
-        self._opening_strategy = opening_strategy
-
-    @property
-    def opening_strategy(self) -> Callable:
-        if self._opening_strategy:
-            return self._opening_strategy
-        raise NotImplementedError("Component has no opening strategy")
 
 
 class File(FSNamedComponent):
 
-    def __init__(self, name: str, content: FileContent = FileContent(), opening_strategy: Callable = None):
-        super().__init__(name, opening_strategy)
+    def __init__(self, name: str, content: FileContent = FileContent()):
+        super().__init__(name)
         self.content = content
 
     def __str__(self) -> str:
@@ -58,13 +60,18 @@ class File(FSNamedComponent):
 
     @staticmethod
     def get_type() -> str:
-        return "[FILE]"
+        return "FILE"
+
+    def open(self, browser_page):
+        from src.gui.file_editor import FileEditor
+        editor = FileEditor(master=browser_page, target=self)
+        editor.file_content.insert(tk.END, self.content.content)
 
 
 class Directory(FSNamedComponent):
 
-    def __init__(self, name: str, opening_strategy: Callable = None):
-        super().__init__(name, opening_strategy)
+    def __init__(self, name: str):
+        super().__init__(name)
         self.children = []
 
     def add_child(self, child: FSNamedComponent):
@@ -74,9 +81,18 @@ class Directory(FSNamedComponent):
         result = f"[DIRECTORY]: {self.name}"
         if len(self.children) > 0:
             for child in self.children:
-                result += f"\n\t|--{child.get_type()}: {child.name}"
+                result += f"\n\t|--[{child.get_type()}]: {child.name}"
         return result
+
+    def open(self, browser_page):
+        browser_page.components = self.children
+        browser_page.component_view.delete(*browser_page.component_view.get_children())
+        for file in browser_page.components:
+            row = (file.name, file.get_type())
+            browser_page.component_view.insert('', 'end', values=row)
+        browser_page.path_entry.delete(0, 'end')
+        browser_page.path_entry.insert(tk.END, self.name)
 
     @staticmethod
     def get_type() -> str:
-        return "[DIRECTORY]"
+        return "DIRECTORY"
