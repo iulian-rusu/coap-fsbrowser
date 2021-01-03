@@ -5,6 +5,10 @@ from src.file_system.file_system import File, Directory
 
 
 class CreationBox(tk.Toplevel):
+    """
+    Window that appears when the user wants to create a new file or directory.
+    Creating the component requires confirmation from the server.
+    """
 
     def __init__(self, title: str, is_file: bool, *args, **kwargs):
         super().__init__(*args, **kwargs)

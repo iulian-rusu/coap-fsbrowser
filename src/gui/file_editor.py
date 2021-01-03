@@ -5,7 +5,11 @@ from src.file_system.file_system import File, FileContent
 
 
 class FileEditor(tk.Toplevel):
-
+    """
+    Window that contains the content of a file. Apperas when opening a file.
+    Allows the user to change the file content and save it.
+    Saving changes requires confirmation from the server.
+    """
     def __init__(self, target: File, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.target = target
@@ -28,6 +32,7 @@ class FileEditor(tk.Toplevel):
     def build_gui(self):
         self.main_frame = tk.Frame(master=self)
         self.file_content = tk.Text(self.main_frame)
+        self.file_content.insert(tk.END, self.target.content.content)
         self.file_content.place(anchor='nw', height='550', width='1000')
 
         self.save_btn = tk.Button(self.main_frame)

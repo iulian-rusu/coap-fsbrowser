@@ -10,12 +10,12 @@ from src.gui.connection_page import ConnectionPage
 class AppRoot(tk.Tk):
     """
     Top level view of the application.
-    Contains GUI pages and the CoAP Client.
+    Contains GUI pages and the CoAP Client, as well as the thread that runs the client.
     """
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        # dcitionary with all app pages
+        # dictionary with all app pages
         self.pages = {
             'connection': ConnectionPage('Connect', master=self),
             'browser': BrowserPage('Browse Files', master=self)
@@ -45,7 +45,7 @@ class AppRoot(tk.Tk):
             self.client_thread.start()
             self.show_page('browser')
         except OSError as err:
-            logging.error(err)
+            self.active_page.error_msg(err.strerror)
 
     def set_confirmable(self, is_confirmable: bool):
         if self.client:

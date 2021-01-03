@@ -1,5 +1,4 @@
 import abc
-import tkinter as tk
 
 
 class FSComponent(metaclass=abc.ABCMeta):
@@ -11,10 +10,6 @@ class FSComponent(metaclass=abc.ABCMeta):
     @staticmethod
     @abc.abstractmethod
     def get_type() -> str:
-        pass
-
-    @abc.abstractmethod
-    def open(self, browser_page):
         pass
 
 
@@ -29,11 +24,6 @@ class FileContent(FSComponent):
     @staticmethod
     def get_type() -> str:
         return "[FILE CONTENT]"
-
-    def open(self, browser_page):
-        file = browser_page.selected_component
-        file.content = self
-        file.open(browser_page)
 
 
 class FSNamedComponent(FSComponent, abc.ABC):
@@ -62,11 +52,6 @@ class File(FSNamedComponent):
     def get_type() -> str:
         return "FILE"
 
-    def open(self, browser_page):
-        from src.gui.file_editor import FileEditor
-        editor = FileEditor(master=browser_page, target=self)
-        editor.file_content.insert(tk.END, self.content.content)
-
 
 class Directory(FSNamedComponent):
 
@@ -83,15 +68,6 @@ class Directory(FSNamedComponent):
             for child in self.children:
                 result += f"\n\t|--[{child.get_type()}]: {child.name}"
         return result
-
-    def open(self, browser_page):
-        browser_page.components = self.children
-        browser_page.component_view.delete(*browser_page.component_view.get_children())
-        for file in browser_page.components:
-            row = (file.name, file.get_type())
-            browser_page.component_view.insert('', 'end', values=row)
-        browser_page.path_entry.delete(0, 'end')
-        browser_page.path_entry.insert(tk.END, self.name)
 
     @staticmethod
     def get_type() -> str:
