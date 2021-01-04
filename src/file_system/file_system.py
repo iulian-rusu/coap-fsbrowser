@@ -23,7 +23,7 @@ class FileContent(FSComponent):
 
     @staticmethod
     def get_type() -> str:
-        return "[FILE CONTENT]"
+        return "FILE CONTENT"
 
 
 class FSNamedComponent(FSComponent, abc.ABC):

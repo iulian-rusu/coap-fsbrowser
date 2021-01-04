@@ -19,16 +19,16 @@ class CoAPMessage:
         self.token = token
 
     def __str__(self) -> str:
-        return f"""[HEADER]: {self.header_version}, [TYPE]: {self.msg_type}, [TOKEN LENGTH]: {self.token_length}, \
-[CLASS]: {self.msg_class}, [CODE]: {self.msg_code}, [ID]: {self.msg_id}
-[TOKEN]: {hex(self.token) if self.token_length else ''}
-[DATA]: {self.payload}\n"""
+        return f"""[VERSION]:\t{self.header_version}\n[TYPE]:\t\t{self.msg_type}\n[TKN LEN]:\t{self.token_length}
+[CLASS]:\t{self.msg_class}\n[CODE]:\t\t{self.msg_code}\n[MSG ID]:\t{self.msg_id}
+[TOKEN]:\t{hex(self.token) if self.token_length else ''}
+[PAYLOAD]:\t{self.payload}\n"""
 
     @classmethod
     def from_bytes(cls, data_bytes: bytes) -> 'CoAPMessage':
         """
         Creates a CoAPMessage from bytes encoded using the CoAP protocol.
-        This method will also check any format inconsistencies according to RFC-7252 and will throw FormatException.
+        This method will also check any format inconsistencies according to RFC-7252 and will throw InvalidFormat.
 
         :param data_bytes: The bytes that encode the message.
         """
@@ -51,7 +51,7 @@ class CoAPMessage:
             # message must be emtpy
             if not CoAPMessage.is_empty(msg_class, msg_code, token_length, data_bytes):
                 raise InvalidFormat("Incorrect format for EMPTY CoAP message")
-            # empty message must be non-confirmable
+            # empty message must be confirmable
             if msg_type == 0x1:
                 raise InvalidFormat("Non-confirmable CoAP message cannot be EMPTY")
         token = 0x0
@@ -64,3 +64,49 @@ class CoAPMessage:
     @staticmethod
     def is_empty(msg_class: int, msg_code: int, token_length: int, data_bytes: bytes) -> bool:
         return msg_class == 0x0 and msg_code == 0x0 and token_length == 0x0 and len(data_bytes) == 4
+
+
+class CoAP:
+    """
+    Containts static methods that encode a specified message.
+    according to the CoAP RFC-7252 specification.
+    """
+
+    HEADER_LEN = 4
+    VERSION = 0x1E
+    MSG_TYPE = 0x1C
+    TOKEN_LENGTH = 0x18
+    MSG_CLASS = 0x15
+    MSG_CODE = 0x10
+    MSG_ID = 0x00
+
+    def __init__(self):
+        raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")
+
+    @staticmethod
+    def wrap(msg: CoAPMessage) -> bytes:
+        """
+        Takes a CoAPMessage object and converts it into a stream of bytes according to the CoAP protocol
+
+        :param msg: The CoAPMEssage object to be encoded.
+        :return: bytes representing the encoded message.
+        """
+
+        coap_header = CoAP.build_header(msg)
+        payload = b''
+        if len(msg.payload):
+            payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
+        return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + payload
+
+    @staticmethod
+    def build_header(msg: CoAPMessage) -> int:
+        header = 0x00
+        header |= msg.header_version << CoAP.VERSION
+        header |= (0b11 & msg.msg_type) << CoAP.MSG_TYPE
+        header |= msg.token_length << CoAP.TOKEN_LENGTH
+        header |= (0b111 & msg.msg_class) << CoAP.MSG_CLASS
+        header |= (0x1F & msg.msg_code) << CoAP.MSG_CODE
+        header |= (0xFFFF & msg.msg_id) << CoAP.MSG_ID
+        if msg.token_length:
+            header = (header << 8 * msg.token_length) | msg.token
+        return header

@@ -3,6 +3,7 @@ import queue
 import threading
 import tkinter as tk
 from src.client.client import Client
+from src.command.command import FSCommand
 from src.gui.browser_page import BrowserPage
 from src.gui.connection_page import ConnectionPage
 
@@ -39,19 +40,23 @@ class AppRoot(tk.Tk):
             logging.error(f"Unknown page: '{e}'")
 
     def on_connect(self, ip: str, port: int):
+        self.client_thread = threading.Thread(target=lambda: self.start_client(ip, port))
+        self.client_thread.start()
+        self.active_page.display_message('connecting...', color='green', delay=10)
+
+    def start_client(self, ip: str, port: int):
         try:
             self.client = Client(server_ip=ip, server_port=port, msg_queue=self.msg_queue)
-            self.client_thread = threading.Thread(target=self.client.run)
-            self.client_thread.start()
             self.show_page('browser')
+            self.client.run()
         except OSError as err:
-            self.active_page.error_msg(err.strerror)
+            self.active_page.display_message(err.strerror)
 
-    def set_confirmable(self, is_confirmable: bool):
+    def set_message_confirmation(self, is_confirmable: bool):
         if self.client:
             self.client.confirmation_req = is_confirmable
 
-    def send_to_client(self, cmd):
+    def send_to_client(self, cmd: FSCommand):
         self.msg_queue.put(cmd)
 
     def destroy(self):

@@ -96,7 +96,7 @@ class BrowserPage(BasePage):
             # cmd.exec('response ok')
 
     def on_confirmation_toggle(self):
-        self.master.set_confirmable(bool(self.is_confirmable.get()))
+        self.master.set_message_confirmation(bool(self.is_confirmable.get()))
 
     def build_gui(self):
         self.path_lbl = tk.Label(self)

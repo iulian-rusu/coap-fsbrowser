@@ -6,8 +6,7 @@ import queue
 from typing import Optional
 
 from src.client.exceptions import InvalidResponse
-from src.client.coap_message import CoAPMessage
-from src.client.protocol import CoAP
+from src.client.coap_message import CoAPMessage, CoAP
 from src.command.command import FSCommand
 
 
@@ -99,7 +98,7 @@ class Client:
                 # all good - return message
                 return coap_response
             except socket.timeout:
-                self.logger.error("(TIMEOUT) Server not responding")
+                self.logger.error("(TIMEOUT)\tServer not responding")
             except InvalidResponse as e:
                 self.logger.error(e)
                 # resend message
@@ -123,21 +122,22 @@ class Client:
         print(coap_response)
         response_code = 100 * coap_response.msg_class + coap_response.msg_code
         if coap_response.msg_class == 2:
-            self.logger.info(f'(RESPONSE) Success: {response_code}')
+            self.logger.info(f'(RESPONSE)\tSuccess: {response_code}')
             # all good - execute the command locally to be up to date with the server
             cmd.exec(coap_response.payload)
         elif coap_response.msg_class == 4:
             # client error
-            self.logger.error(f'(RESPONSE) Client error: {response_code}')
+            self.logger.error(f'(RESPONSE)\tClient error: {response_code}')
         elif coap_response.msg_class == 5:
             # server error
-            self.logger.error(f'(RESPONSE) Server error: {response_code}')
+            self.logger.error(f'(RESPONSE)\tServer error: {response_code}')
         else:
             # other response classes not recognized/implemented
             self.logger.warning(f'Could not identify server response: {response_code}')
 
     def send_message(self, coap_msg: CoAPMessage):
         coap_data = CoAP.wrap(coap_msg)
+        self.logger.info(f"(REQUEST)\t{coap_data.hex(sep=' ', bytes_per_sep=1)}")
         self.send_bytes(coap_data, self.server_ip, self.server_port)
 
     def recv_message(self) -> CoAPMessage:
@@ -145,7 +145,6 @@ class Client:
         return CoAPMessage.from_bytes(coap_bytes)
 
     def send_bytes(self, msg: bytes, ip: str, port: int):
-        self.logger.info(f"(REQUEST) {msg.hex(sep=' ', bytes_per_sep=1)}")
         self.socket_inst.sendto(msg, (ip, port))
 
     def recv_bytes(self) -> bytes:

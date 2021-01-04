@@ -1,5 +1,4 @@
 import threading
-import time
 import tkinter as tk
 
 from src.gui.base_page import BasePage
@@ -10,30 +9,26 @@ class ConnectionPage(BasePage):
     def __init__(self, title: str, *args, **kwargs):
         BasePage.__init__(self, title, *args, **kwargs)
         self.entries.append(self.addr_entry)
-        self.invalid_addr_msg = tk.Label(master=self)
-        self.invalid_addr_msg.config(fg='red')
 
     def on_connect(self):
         addr = self.addr_entry.get()
         split_addr = addr.strip().split(':')
         if len(split_addr) != 2:
-            self.error_msg('Invalid address')
+            self.display_message('Invalid address')
             return
         try:
             ip, port = split_addr
             port = int(port)
+            if port <= 0:
+                raise ValueError
             self.master.on_connect(ip, port)
         except ValueError:
-            self.error_msg('Invalid port')
+            self.display_message('Invalid port')
 
-    def error_msg(self, msg: str):
-        self.invalid_addr_msg.config(text=msg)
-        self.invalid_addr_msg.place(anchor='nw', relx='0.4', rely='0.35', width='200')
-        threading.Thread(target=lambda: self.remove_after_delay(2)).start()
-
-    def remove_after_delay(self, delay: int):
-        time.sleep(delay)
-        self.invalid_addr_msg.place_forget()
+    def display_message(self, msg: str, color: str = 'red', delay: int = 2):
+        self.message_lbl.config(text=msg, fg=color)
+        self.message_lbl.place(anchor='nw', relx='0.05', rely='0.35', width='900')
+        threading.Thread(target=lambda: self.remove_after_delay(delay)).start()
 
     def build_gui(self):
         self.addr_entry = tk.Entry(self)
