@@ -1,3 +1,4 @@
+import threading
 import time
 import tkinter as tk
 import abc
@@ -6,7 +7,7 @@ import abc
 class BasePage(tk.Frame, metaclass=abc.ABCMeta):
     """
     Base abstract class for all GUI pages.
-    Sets the frame dimensions and adds the frame to the master grid.
+    Contains a single widget which is sued to display messages for the user.
     """
 
     def __init__(self, title: str, *args, **kwargs):
@@ -17,10 +18,28 @@ class BasePage(tk.Frame, metaclass=abc.ABCMeta):
         self.entries = []
         self.build_gui()
 
-    def display_message(self, msg: str, color: str = 'red', delay: int = 2):
+    @abc.abstractmethod
+    def display_message(self, msg: str, duration: int = 2, color: str = 'red'):
         pass
 
-    def remove_after_delay(self, delay: int):
+    def _display_message_impl(self, msg: str, duration: int = 2, color: str = 'red', **place_kwargs):
+        """
+        This method displays a message in the GUI for a druation of time.
+        The exact postion, size, color and duration of the message can be specified with the arguments.
+
+        :param msg: The message to be displayed in the GUI
+        :param color: The color of the message, must be compatible with tk.Label
+        :param duration: The duration of the message on the screen. -1 for unlimited duration.
+        :param place_kwargs: Keyword arguments for tk.Label.place() that specify the position and size of the message
+        :return: None
+        """
+        self.message_lbl.config(text=msg, fg=color)
+        self.message_lbl.place(**place_kwargs)
+        self.message_lbl.tkraise()
+        if duration >= 0:
+            threading.Thread(target=lambda: self._remove_after_delay(duration)).start()
+
+    def _remove_after_delay(self, delay: int):
         time.sleep(delay)
         self.message_lbl.place_forget()
         self.message_lbl.config(fg='black')

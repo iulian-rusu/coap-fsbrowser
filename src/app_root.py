@@ -40,9 +40,9 @@ class AppRoot(tk.Tk):
             logging.error(f"Unknown page: '{e}'")
 
     def on_connect(self, ip: str, port: int):
+        self.active_page.display_message('connecting...', color='green', duration=-1)
         self.client_thread = threading.Thread(target=lambda: self.start_client(ip, port))
         self.client_thread.start()
-        self.active_page.display_message('connecting...', color='green', delay=10)
 
     def start_client(self, ip: str, port: int):
         try:

@@ -1,4 +1,3 @@
-import threading
 import tkinter as tk
 
 from src.gui.base_page import BasePage
@@ -9,6 +8,9 @@ class ConnectionPage(BasePage):
     def __init__(self, title: str, *args, **kwargs):
         BasePage.__init__(self, title, *args, **kwargs)
         self.entries.append(self.addr_entry)
+
+    def display_message(self, msg: str, duration: int = 2, color: str = 'red'):
+        self._display_message_impl(msg, duration, color, anchor='nw', relx='0.05', rely='0.35', width='900')
 
     def on_connect(self):
         addr = self.addr_entry.get()
@@ -24,11 +26,6 @@ class ConnectionPage(BasePage):
             self.master.on_connect(ip, port)
         except ValueError:
             self.display_message('Invalid port')
-
-    def display_message(self, msg: str, color: str = 'red', delay: int = 2):
-        self.message_lbl.config(text=msg, fg=color)
-        self.message_lbl.place(anchor='nw', relx='0.05', rely='0.35', width='900')
-        threading.Thread(target=lambda: self.remove_after_delay(delay)).start()
 
     def build_gui(self):
         self.addr_entry = tk.Entry(self)

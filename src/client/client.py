@@ -137,7 +137,7 @@ class Client:
 
     def send_message(self, coap_msg: CoAPMessage):
         coap_data = CoAP.wrap(coap_msg)
-        self.logger.info(f"(REQUEST)\t{coap_data.hex(sep=' ', bytes_per_sep=1)}")
+        self.logger.info(f"(REQUEST)\t{coap_msg.logging_format()}")
         self.send_bytes(coap_data, self.server_ip, self.server_port)
 
     def recv_message(self) -> CoAPMessage:

@@ -21,6 +21,9 @@ class BrowserPage(BasePage):
         super().reset()
         self.path_entry.insert(tk.END, '')
 
+    def display_message(self, msg: str, duration: int = 2, color: str = 'red'):
+        self._display_message_impl(msg, duration, color, anchor='nw', relx='0.1', width='880', height='30')
+
     def send_to_client(self, cmd: FSCommand):
         self.master.send_to_client(cmd)
 
@@ -116,16 +119,17 @@ class BrowserPage(BasePage):
 
         self.back_btn = ttk.Button(self)
         self.back_btn.config(text='Back')
-        self.back_btn.place(anchor='nw', height='40', relx='0.01', rely=self.BUTTONS_RELY, width='150', )
+        self.back_btn.place(anchor='nw', height='40', relx='0.01', rely=self.BUTTONS_RELY, width='150')
+        self.back_btn.configure(command=self.on_back)
 
         self.open_btn = ttk.Button(self)
         self.open_btn.config(text='Open')
-        self.open_btn.place(anchor='nw', height='40', relx='0.16', rely=self.BUTTONS_RELY, width='150', )
+        self.open_btn.place(anchor='nw', height='40', relx='0.16', rely=self.BUTTONS_RELY, width='150')
         self.open_btn.configure(command=self.on_open)
 
         self.new_dir_btn = ttk.Button(self)
         self.new_dir_btn.config(text='New Directory')
-        self.new_dir_btn.place(anchor='nw', height='40', relx='0.31', rely=self.BUTTONS_RELY, width='150', )
+        self.new_dir_btn.place(anchor='nw', height='40', relx='0.31', rely=self.BUTTONS_RELY, width='150')
         self.new_dir_btn.configure(command=self.on_new_dir)
 
         self.new_file_btn = ttk.Button(self)

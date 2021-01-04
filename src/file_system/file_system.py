@@ -30,9 +30,9 @@ class FSNamedComponent(FSComponent, abc.ABC):
     """
     Abstract base class for file system components with names.
     This type of component is displayed in the GUI by its name.
-    When the user opens the component, the opening strategy associated with it
-    will be called, which will handle the opening and displaying of the component
-    in the correct format.
+    Each sublclass has its own opening strategy:
+        - a file will be opened in a new editor window
+        - a directory will simply load its children into the browser table
     """
 
     def __init__(self, name: str):
