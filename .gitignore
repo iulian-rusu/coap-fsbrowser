@@ -1,6 +1,7 @@
 venv/
 .idea/
 src/tests/
+src/client_log.txt
 /shelf/
 /workspace.xml
 __pycache__

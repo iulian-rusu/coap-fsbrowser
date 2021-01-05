@@ -13,6 +13,7 @@ class BasePage(tk.Frame, metaclass=abc.ABCMeta):
     def __init__(self, title: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message_lbl = tk.Label(master=self)
+        self.current_message_id = 0
         self.title = title
         self.grid(row=0, column=0, sticky="nsew")
         self.entries = []
@@ -36,13 +37,16 @@ class BasePage(tk.Frame, metaclass=abc.ABCMeta):
         self.message_lbl.config(text=msg, fg=color)
         self.message_lbl.place(**place_kwargs)
         self.message_lbl.tkraise()
+        self.current_message_id += 1
         if duration >= 0:
-            threading.Thread(target=lambda: self._remove_after_delay(duration)).start()
+            threading.Thread(target=lambda: self._remove_after_delay(duration, self.current_message_id)).start()
 
-    def _remove_after_delay(self, delay: int):
+    def _remove_after_delay(self, delay: int, _id: int):
         time.sleep(delay)
-        self.message_lbl.place_forget()
-        self.message_lbl.config(fg='black')
+        if _id == self.current_message_id:
+            self.current_message_id -= 1
+            self.message_lbl.place_forget()
+            self.message_lbl.config(fg='black')
 
     def show(self):
         self.winfo_toplevel().title(self.title)

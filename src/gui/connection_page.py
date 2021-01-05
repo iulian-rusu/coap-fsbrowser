@@ -20,7 +20,7 @@ class ConnectionPage(BasePage):
         try:
             ip, port = split_addr
             port = int(port)
-            if port <= 0:
+            if port < 0 or port > 65535:
                 raise ValueError
             self.master.on_connect(ip, port)
         except ValueError:
