@@ -37,13 +37,18 @@ class BrowserPage(BasePage):
 
     def open_component(self, component: FSComponent, callback_data: FSComponent):
         if isinstance(callback_data, FileContent):
-            assert isinstance(component, File)
-            component.content = callback_data
-            FileEditor(master=self, target=component)
+            if isinstance(component, File):
+                component.content = callback_data
+                FileEditor(master=self, target=component)
+            else:
+                self.display_message('Incorrect server data: Received file content', duration=5)
         elif isinstance(callback_data, Directory):
             self.open_dir(callback_data)
 
     def open_dir(self, directory: Directory):
+        if not isinstance(directory, Directory):
+            self.display_message('Incorrect server data: Expected directory', duration=5)
+            return
         self.components = directory.children
         self.component_view.delete(*self.component_view.get_children())
         for comp in self.components:
@@ -69,16 +74,12 @@ class BrowserPage(BasePage):
         dir_path = self.path_entry.get()
         cmd = OpenCommand(dir_path, callback=self.open_dir)
         self.send_to_client(cmd)
-        # for testing
-        # cmd.exec('d/mnt\x00dBD\x00fsample.txt\x00dRC\x00dAPD Proiect\x00fcommands.txt')
 
     def on_open(self):
         if self.selected_component:
             cmd = OpenCommand(self.selected_component.name,
                               callback=lambda data: self.open_component(self.selected_component, data))
             self.send_to_client(cmd)
-            # for testing
-            # self.open_component(self.selected_component, self.selected_component.content)
 
     def on_back(self):
         cmd = BackCommand(self.path_entry.get(), callback=self.open_dir)
@@ -95,8 +96,6 @@ class BrowserPage(BasePage):
             cmd = DeleteCommand(self.selected_component.name,
                                 callback=lambda: self.remove_component(self.selected_component))
             self.send_to_client(cmd)
-            # for testing
-            # cmd.exec('response ok')
 
     def on_confirmation_toggle(self):
         self.master.set_message_confirmation(bool(self.is_confirmable.get()))

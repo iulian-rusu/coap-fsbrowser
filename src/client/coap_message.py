@@ -45,19 +45,19 @@ class CoAPMessage:
         msg_class = (header_bytes[1] >> 5) & 0x07
         msg_code = (header_bytes[1] >> 0) & 0x1F
         msg_id = (header_bytes[2] << 8) | header_bytes[3]
-        # message must have correct header version, token length and class
+        # Message must have correct header version, token length and class
         if header_version != 0x1:
             raise InvalidFormat("Message has incorrect CoAP header version")
         elif 9 <= token_length <= 15:
             raise InvalidFormat("Message has incorrect CoAP token length")
         elif msg_class in (1, 6, 7):
             raise InvalidFormat("Message uses reserved CoAP message class")
-        # check special message types/classes/codes
+        # Check special message types/classes/codes
         if (msg_class == 0x0 and msg_code == 0x0) or msg_type == 0x3:
-            # message must be emtpy
+            # Messages of such type must be emtpy
             if not CoAPMessage.is_empty(msg_class, msg_code, token_length, data_bytes):
                 raise InvalidFormat("Incorrect format for EMPTY CoAP message")
-            # empty message must be confirmable
+            # Empty message must be confirmable
             if msg_type == 0x1:
                 raise InvalidFormat("Non-confirmable CoAP message cannot be EMPTY")
         token = 0x0
@@ -78,6 +78,7 @@ class CoAP:
     according to the CoAP RFC-7252 specification.
     """
 
+    # Message format parameters
     HEADER_LEN = 4
     VERSION = 0x1E
     MSG_TYPE = 0x1C
@@ -85,6 +86,26 @@ class CoAP:
     MSG_CLASS = 0x15
     MSG_CODE = 0x10
     MSG_ID = 0x00
+
+    # Response code translation
+    RESPONSE_CODE = {
+        # Success
+        201: 'Created',
+        202: 'Deleted',
+        203: 'Valid',
+        204: 'Changed',
+        # Client error
+        400: 'Bad Request',
+        401: 'Unauthorized',
+        402: 'Bad option',
+        403: 'Forbidden',
+        404: 'Not Found',
+        405: 'Method Not Allowed',
+        # Server error
+        500: 'Internal Server Error',
+        501: 'Not Implemented',
+        503: 'Service Not Available'
+    }
 
     def __init__(self):
         raise NotImplemented(f"Cannot instantiate {self.__class__.__name__} class")

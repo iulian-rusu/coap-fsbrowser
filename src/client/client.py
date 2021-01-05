@@ -5,7 +5,7 @@ import math
 import queue
 from typing import Optional
 
-from src.client.exceptions import InvalidResponse
+from src.client.exceptions import InvalidResponse, InvalidFormat
 from src.client.coap_message import CoAPMessage, CoAP
 from src.command.command import FSCommand
 
@@ -23,16 +23,19 @@ class Client:
     QUEUE_TIMEOUT = 1.0
 
     def __init__(self, server_ip: str, server_port: int, msg_queue: 'queue.Queue[FSCommand]' = None):
+        self.server_ip = socket.gethostbyname(server_ip)
+        self.server_port = server_port
         self.socket_inst = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
         self.socket_inst.settimeout(Client.SOCK_TIMEOUT)
         self.msg_queue = msg_queue
-        self.server_ip = socket.gethostbyname(server_ip)
-        self.server_port = server_port
         self.last_msg_id = 0
         self.last_token = None
         self.confirmation_req = False
         self.is_running = False
-        # initialize logger
+        # Callable used to asychronously display client messages in the GUI
+        self.display_message_callback = None
+
+        # Initialize logger
         self.logger = logging.Logger(name='CLIENT', level=logging.INFO)
         file_handler = logging.FileHandler('client_log.txt')
         formatter = logging.Formatter('<%(name)s@%(asctime)s>:%(levelname)-8s%(message)s')
@@ -48,13 +51,13 @@ class Client:
         """
         self.is_running = True
         while self.is_running:
-            # receive command from message queue
+            # Receive command from message queue
             try:
                 cmd = self.msg_queue.get(block=True, timeout=Client.QUEUE_TIMEOUT)
             except queue.Empty:
-                # no commands for now, check client state and try again
+                # No commands for now, check client state and try again
                 continue
-            # build CoAP message out of command and send it
+            # Build CoAP message out of command and send it
             msg_type = 0x0 if self.confirmation_req else 0x1
             msg_class = cmd.get_coap_class()
             msg_code = cmd.get_coap_code()
@@ -71,6 +74,7 @@ class Client:
         A correct response has a matching tokken and a piggybacked acknowledge in case of confirmable requests.
         Any incorrect response will trigger a retransmission attempt, up to a set maximum amount of retransmissions.
         If the server does not send any response during the socket timoeut period, the transmission will be aborted.
+        Received messages without a matching token are considered irrelevant and are ignored.
 
         :param payload: The payload (body) of the message to be sent.
         :param msg_type: The type of the message to be sent.
@@ -91,23 +95,23 @@ class Client:
             try:
                 coap_response = self.recv_message()
                 while self.last_token != coap_response.token:
-                    # ignore responses with incorrect token
+                    # Ignore responses with incorrect token
                     coap_response = self.recv_message()
                 if self.confirmation_req and self.last_msg_id != coap_response.msg_id:
                     raise InvalidResponse("Acknowledge message id did not match")
-                # all good - return message
+                # All good - return message
                 return coap_response
             except socket.timeout:
                 self.logger.error("(TIMEOUT)\tServer not responding")
             except InvalidResponse as e:
                 self.logger.error(e)
-                # resend message
+                # Received messsage was incorrect - try to resend
                 attempts -= 1
-                if attempts <= 0:
-                    self.logger.error("Too many invalid responses - abandonning retransmission")
-                else:
+                if attempts > 0:
                     send_again = True
-        # something wrong - return nothing
+                else:
+                    self.logger.error("Too many invalid responses - abandonning retransmission")
+        # Something wrong - return nothing
         return None
 
     def process_response(self, coap_response: CoAPMessage, cmd: FSCommand):
@@ -119,21 +123,33 @@ class Client:
         :param cmd: The current comand awaiting response.
         :return: None
         """
-        print(coap_response)
         response_code = 100 * coap_response.msg_class + coap_response.msg_code
         if coap_response.msg_class == 2:
-            self.logger.info(f'(RESPONSE)\tSuccess: {response_code}')
-            # all good - execute the command locally to be up to date with the server
-            cmd.exec(coap_response.payload)
+            self.logger.info(f'(RESPONSE)\t{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}')
+            # Success - execute the command locally to be up to date with the server
+            try:
+                cmd.exec(coap_response.payload)
+            except InvalidFormat as e:
+                self.display_message(f'Incorrect server data: {e.msg}', duration=5)
         elif coap_response.msg_class == 4:
-            # client error
-            self.logger.error(f'(RESPONSE)\tClient error: {response_code}')
+            # Client error
+            msg = f'{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}'
+            self.logger.error(f'(RESPONSE)\t{msg}')
+            self.display_message(msg)
         elif coap_response.msg_class == 5:
-            # server error
-            self.logger.error(f'(RESPONSE)\tServer error: {response_code}')
+            # Server error
+            msg = f'{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}'
+            self.logger.error(f'(RESPONSE)\t{msg}')
+            self.display_message(msg)
         else:
-            # other response classes not recognized/implemented
-            self.logger.warning(f'Could not identify server response: {response_code}')
+            # Other response classes not recognized/implemented
+            msg = f'Unknown code: {response_code}'
+            self.logger.warning(f'(RESPONSE)\t{msg}')
+            self.display_message(msg, color='orange3')
+
+    def display_message(self, msg: str, duration: int = 2, color: str = 'red'):
+        if self.display_message_callback:
+            self.display_message_callback(msg, duration, color)
 
     def send_message(self, coap_msg: CoAPMessage):
         coap_data = CoAP.wrap(coap_msg)

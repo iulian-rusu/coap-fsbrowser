@@ -2,7 +2,6 @@ import abc
 
 
 class FSComponent(metaclass=abc.ABCMeta):
-
     @abc.abstractmethod
     def __str__(self) -> str:
         pass
@@ -14,7 +13,6 @@ class FSComponent(metaclass=abc.ABCMeta):
 
 
 class FileContent(FSComponent):
-
     def __init__(self, content: str = ''):
         self.content = content
 
@@ -40,7 +38,6 @@ class FSNamedComponent(FSComponent, abc.ABC):
 
 
 class File(FSNamedComponent):
-
     def __init__(self, name: str, content: FileContent = FileContent()):
         super().__init__(name)
         self.content = content
@@ -54,7 +51,6 @@ class File(FSNamedComponent):
 
 
 class Directory(FSNamedComponent):
-
     def __init__(self, name: str):
         super().__init__(name)
         self.children = []

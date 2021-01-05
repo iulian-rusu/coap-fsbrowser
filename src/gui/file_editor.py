@@ -22,8 +22,6 @@ class FileEditor(tk.Toplevel):
         content = self.file_content.get('1.0', tk.END)
         cmd = SaveCommand(self.target.name, content, callback=lambda: self.set_file_content(content))
         self.master.send_to_client(cmd)
-        # for testing
-        # cmd.exec('response')
         self.destroy()
 
     def set_file_content(self, content: str):

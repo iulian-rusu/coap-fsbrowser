@@ -4,7 +4,6 @@ from src.gui.base_page import BasePage
 
 
 class ConnectionPage(BasePage):
-
     def __init__(self, title: str, *args, **kwargs):
         BasePage.__init__(self, title, *args, **kwargs)
         self.entries.append(self.addr_entry)

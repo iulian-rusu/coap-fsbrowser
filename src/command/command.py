@@ -59,7 +59,7 @@ class BackCommand(FSCommand):
 
         code = 0x1 (GET)
 
-        payload = <code><dir_name>
+        payload = <CMD_BACK><dir_name>
     """
 
     def __init__(self, current_dir_name: str, callback: Callable = None):
@@ -95,7 +95,7 @@ class OpenCommand(FSCommand):
 
         code = 0x1 (GET)
 
-        payload = <code><component_name>
+        payload = <CMD_OPEN><component_name>
     """
 
     def __init__(self, component_name: str, callback: Callable = None):
@@ -116,7 +116,7 @@ class OpenCommand(FSCommand):
 
     def exec(self, response_data: str):
         if self.callback:
-            # parse response and get the component to be opened
+            # Parse response and get the component to be opened
             to_open = FSParser.parse(response_data)
             self.callback(to_open)
 
@@ -131,7 +131,7 @@ class SaveCommand(FSCommand):
 
         code = 0x2 (POST)
 
-        payload = <code><file_name>0x0<file_content>
+        payload = <CMD_SAVE><file_name>0x0<file_content>
     """
 
     def __init__(self, file_name: str, content: str, callback: Callable = None):
@@ -153,7 +153,7 @@ class SaveCommand(FSCommand):
 
     def exec(self, response_data: str):
         if self.callback:
-            # no need to parse the response, just save the current file content
+            # No need to parse the response, just save the current file content
             self.callback()
 
 
@@ -167,7 +167,7 @@ class NewFileCommand(FSCommand):
 
         code = 0x2 (POST)
 
-        payload = <code><file_name>
+        payload = <CMD_NEWF><file_name>
     """
 
     def __init__(self, new_file_name: str, callback: Callable = None):
@@ -188,7 +188,7 @@ class NewFileCommand(FSCommand):
 
     def exec(self, response_data: str):
         if self.callback:
-            # no need to parse the response, just create an empty file
+            # No need to parse the response, just create an empty file
             self.callback()
 
 
@@ -202,7 +202,7 @@ class NewDirCommand(FSCommand):
 
         code = 0x2 (POST)
 
-        payload = <code><dir_name>
+        payload = <CMD_NEWD><dir_name>
     """
 
     def __init__(self, new_dir_name: str, callback: Callable = None):
@@ -223,7 +223,7 @@ class NewDirCommand(FSCommand):
 
     def exec(self, response_data: str):
         if self.callback:
-            # no need to parse the response, just create an empty directory
+            # No need to parse the response, just create an empty directory
             self.callback()
 
 
@@ -237,7 +237,7 @@ class DeleteCommand(FSCommand):
 
         code = 0x4 (DELETE)
 
-        payload = <code><component_name>
+        payload = <CMD_DEL><component_name>
     """
 
     def __init__(self, component_name: str, callback: Callable = None):
@@ -258,5 +258,5 @@ class DeleteCommand(FSCommand):
 
     def exec(self, response_data: str):
         if self.callback:
-            # no need to parse the response, just delete component
+            # No need to parse the response, just delete the component
             self.callback()

@@ -16,7 +16,7 @@ class AppRoot(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-        # dictionary with all app pages
+        # Dictionary with all app pages
         self.pages = {
             'connection': ConnectionPage('Connect', master=self),
             'browser': BrowserPage('Browse Files', master=self)
@@ -48,6 +48,8 @@ class AppRoot(tk.Tk):
         try:
             self.client = Client(server_ip=ip, server_port=port, msg_queue=self.msg_queue)
             self.show_page('browser')
+            # Allow the client to display messages on the current page
+            self.client.display_message_callback = self.active_page.display_message
             self.client.run()
         except OSError as err:
             self.active_page.display_message(err.strerror)
