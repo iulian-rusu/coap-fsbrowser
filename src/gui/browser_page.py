@@ -36,33 +36,36 @@ class BrowserPage(BasePage):
             self.selected_component = component
 
     def open_component(self, component: FSComponent, callback_data: FSComponent):
-        if isinstance(callback_data, FileContent):
-            if isinstance(component, File):
-                component.content = callback_data
-                FileEditor(master=self, target=component)
-            else:
-                self.display_message('Incorrect server data: Received file content', duration=5)
-        elif isinstance(callback_data, Directory):
+        if isinstance(component, File):
+            self.open_file(component, callback_data)
+        elif isinstance(component, Directory):
             self.open_dir(callback_data)
 
-    def open_dir(self, directory: Directory):
-        if not isinstance(directory, Directory):
-            self.display_message('Incorrect server data: Expected directory', duration=5)
+    def open_file(self, file: File, file_content: FSComponent):
+        if not isinstance(file_content, FileContent):
+            self.display_message('Incorrect server data: Expected file content', duration=3)
             return
-        self.components = directory.children
+        file.content = file_content
+        FileEditor(master=self, target=file)
+
+    def open_dir(self, new_dir: FSComponent):
+        if not isinstance(new_dir, Directory):
+            self.display_message('Incorrect server data: Expected directory', duration=3)
+            return
+        self.components = new_dir.children
+        self.display_current_dir()
+        self.path_entry.delete(0, 'end')
+        self.path_entry.insert(tk.END, new_dir.name)
+
+    def display_current_dir(self):
         self.component_view.delete(*self.component_view.get_children())
         for comp in self.components:
             row = (comp.name, comp.get_type())
             self.component_view.insert('', 'end', values=row)
-        self.path_entry.delete(0, 'end')
-        self.path_entry.insert(tk.END, directory.name)
 
     def remove_component(self, component: FSNamedComponent):
         self.components.remove(component)
-        self.component_view.delete(*self.component_view.get_children())
-        for comp in self.components:
-            row = (comp.name, comp.get_type())
-            self.component_view.insert('', 'end', values=row)
+        self.display_current_dir()
         self.selected_component = None
 
     def insert_component(self, component: FSNamedComponent):
