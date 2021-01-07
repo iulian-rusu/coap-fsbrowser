@@ -26,7 +26,7 @@ class CoAPMessage:
 
     def logging_format(self) -> str:
         data_bytes = CoAP.build_header(self)
-        ans = data_bytes.to_bytes(CoAP.HEADER_LEN + self.token_length, 'big').hex(sep=' ', bytes_per_sep=1)
+        ans = data_bytes.hex(sep=' ', bytes_per_sep=1)
         ans += f' ff {bytes(self.payload, encoding="utf-8")}'
         return ans
 
@@ -123,10 +123,10 @@ class CoAP:
         payload = b''
         if len(msg.payload):
             payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
-        return coap_header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big') + payload
+        return coap_header + payload
 
     @staticmethod
-    def build_header(msg: CoAPMessage) -> int:
+    def build_header(msg: CoAPMessage) -> bytes:
         header = 0x00
         header |= msg.header_version << CoAP.VERSION
         header |= (0b11 & msg.msg_type) << CoAP.MSG_TYPE
@@ -136,4 +136,4 @@ class CoAP:
         header |= (0xFFFF & msg.msg_id) << CoAP.MSG_ID
         if msg.token_length:
             header = (header << 8 * msg.token_length) | msg.token
-        return header
+        return header.to_bytes(CoAP.HEADER_LEN + msg.token_length, 'big')

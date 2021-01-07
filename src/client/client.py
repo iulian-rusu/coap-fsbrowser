@@ -131,13 +131,8 @@ class Client:
                 cmd.exec(coap_response.payload)
             except InvalidFormat as e:
                 self.display_message(f'Incorrect server data: {e.msg}', duration=3)
-        elif coap_response.msg_class == 4:
-            # Client error
-            msg = f'{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}'
-            self.logger.error(f'(RESPONSE)\t{msg}')
-            self.display_message(msg)
-        elif coap_response.msg_class == 5:
-            # Server error
+        elif coap_response.msg_class == 4 or coap_response.msg_class == 5:
+            # Client or Server error
             msg = f'{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}'
             self.logger.error(f'(RESPONSE)\t{msg}')
             self.display_message(msg)
