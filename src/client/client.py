@@ -38,7 +38,7 @@ class Client:
         # Initialize logger
         self.logger = logging.Logger(name='CLIENT', level=logging.INFO)
         file_handler = logging.FileHandler('client_log.txt')
-        formatter = logging.Formatter('<%(name)s@%(asctime)s>:%(levelname)-8s%(message)s')
+        formatter = logging.Formatter('<%(name)s@%(asctime)s>:[%(levelname)s] \t%(message)s')
         file_handler.setFormatter(formatter)
         file_handler.setLevel(logging.DEBUG)
         self.logger.addHandler(file_handler)
