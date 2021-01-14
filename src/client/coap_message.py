@@ -45,21 +45,23 @@ class CoAPMessage:
         msg_class = (header_bytes[1] >> 5) & 0x07
         msg_code = (header_bytes[1] >> 0) & 0x1F
         msg_id = (header_bytes[2] << 8) | header_bytes[3]
-        # Message must have correct header version, token length and class
-        if header_version != 0x1:
+
+        if header_version not in CoAP.VALID_VERSIONS:
             raise InvalidFormat("Message has incorrect CoAP header version")
         elif 9 <= token_length <= 15:
             raise InvalidFormat("Message has incorrect CoAP token length")
-        elif msg_class in (1, 6, 7):
+        elif msg_class in CoAP.CLASS_RESERVED:
             raise InvalidFormat("Message uses reserved CoAP message class")
+
         # Check special message types/classes/codes
-        if (msg_class == 0x0 and msg_code == 0x0) or msg_type == 0x3:
+        if (msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY) or msg_type == CoAP.TYPE_RESET:
             # Messages of such type must be emtpy
             if not CoAPMessage.is_empty(msg_class, msg_code, token_length, data_bytes):
                 raise InvalidFormat("Incorrect format for EMPTY CoAP message")
             # Empty message must be confirmable
-            if msg_type == 0x1:
+            if msg_type == CoAP.TYPE_CONF:
                 raise InvalidFormat("Non-confirmable CoAP message cannot be EMPTY")
+
         token = 0x0
         if token_length:
             token = int.from_bytes(data_bytes[4:4 + token_length], 'big')
@@ -74,18 +76,37 @@ class CoAPMessage:
 
 class CoAP:
     """
-    Containts static methods that encode a specified message.
-    according to the CoAP RFC-7252 specification.
+    Holds information about the Constrained Application Protocol compliant with RFC-7252.
+    Containts static methods that encode a specified CoAPMessage object.
     """
 
-    # Message format parameters
     HEADER_LEN = 4
+    VALID_VERSIONS = (1, )
+    PAYLOAD_MARKER = b'\xFF'
+
+    # Field offsets
     VERSION = 0x1E
     MSG_TYPE = 0x1C
     TOKEN_LENGTH = 0x18
     MSG_CLASS = 0x15
     MSG_CODE = 0x10
     MSG_ID = 0x00
+
+    # Message types
+    TYPE_CONF = 0
+    TYPE_NON_CONF = 1
+    TYPE_ACK = 2
+    TYPE_RESET = 3
+
+    # Message classes
+    CLASS_METHOD = 0
+    CLASS_SUCCESS = 2
+    CLASS_CERROR = 4
+    CLASS_SERROR = 5
+    CLASS_RESERVED = (1, 6, 7)
+
+    # Message codes
+    CODE_EMPTY = 0
 
     # Response code translation
     RESPONSE_CODE = {
@@ -113,7 +134,7 @@ class CoAP:
     @staticmethod
     def wrap(msg: CoAPMessage) -> bytes:
         """
-        Takes a CoAPMessage object and converts it into a stream of bytes according to the CoAP protocol
+        Takes a CoAPMessage object and converts it into bytes according to the CoAP protocol
 
         :param msg: The CoAPMEssage object to be encoded.
         :return: bytes representing the encoded message.
@@ -122,7 +143,7 @@ class CoAP:
         coap_header = CoAP.build_header(msg)
         payload = b''
         if len(msg.payload):
-            payload = 0xFF.to_bytes(1, 'big') + msg.payload.encode('utf-8')
+            payload = CoAP.PAYLOAD_MARKER + msg.payload.encode('utf-8')
         return coap_header + payload
 
     @staticmethod

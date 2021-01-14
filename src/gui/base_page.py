@@ -29,9 +29,9 @@ class BasePage(tk.Frame, metaclass=abc.ABCMeta):
         The exact postion, size, color and duration of the message can be specified with the arguments.
 
         :param msg: The message to be displayed in the GUI
-        :param color: The color of the message, must be compatible with tk.Label
+        :param color: The color of the message, must be compatible with tk.Label.
         :param duration: The duration of the message on the screen. -1 for unlimited duration.
-        :param place_kwargs: Keyword arguments for tk.Label.place() that specify the position and size of the message
+        :param place_kwargs: Keyword arguments for tk.Label.place() that specify the position and size of the message.
         :return: None
         """
         self.message_lbl.config(text=msg, fg=color)

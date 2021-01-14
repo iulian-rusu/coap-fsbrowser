@@ -58,7 +58,7 @@ class Client:
                 # No commands for now, check client state and try again
                 continue
             # Build CoAP message out of command and send it
-            msg_type = 0x0 if self.confirmation_req else 0x1
+            msg_type = CoAP.TYPE_CONF if self.confirmation_req else CoAP.TYPE_NON_CONF
             msg_class = cmd.get_coap_class()
             msg_code = cmd.get_coap_code()
             payload = cmd.coap_payload
@@ -71,8 +71,9 @@ class Client:
         """
         Sends a CoAP message to the server until the received response is correct or until the client runs out of
         resend attempts.
-        A correct response has a matching tokken and a piggybacked acknowledge in case of confirmable requests.
-        Any incorrect response will trigger a retransmission attempt, up to a set maximum amount of retransmissions.
+        A correct response has a matching token. In case of confirmable messages, the acknowledge is transmitted with a
+        piggybacked response. Any incorrect response will trigger a retransmission attempt, up to a set maximum amount
+        of retransmissions.
         If the server does not send any response during the socket timoeut period, the transmission will be aborted.
         Received messages without a matching token are considered irrelevant and are ignored.
 
@@ -123,15 +124,21 @@ class Client:
         :param cmd: The current comand awaiting response.
         :return: None
         """
+        if coap_response.msg_type == CoAP.TYPE_RESET:
+            # Message type is Reset - put the command back in the queue for retransmission
+            self.logger.info(f'(RESPONSE)\tReset')
+            self.msg_queue.put(cmd)
+            return
+
         response_code = 100 * coap_response.msg_class + coap_response.msg_code
-        if coap_response.msg_class == 2:
+        if coap_response.msg_class == CoAP.CLASS_SUCCESS:
             self.logger.info(f'(RESPONSE)\t{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}')
             # Success - execute the command locally to be up to date with the server
             try:
                 cmd.exec(coap_response.payload)
             except InvalidFormat as e:
                 self.display_message(f'Incorrect server data: {e.msg}', duration=3)
-        elif coap_response.msg_class == 4 or coap_response.msg_class == 5:
+        elif coap_response.msg_class == CoAP.CLASS_CERROR or coap_response.msg_class == CoAP.CLASS_SERROR:
             # Client or Server error
             msg = f'{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}'
             self.logger.error(f'(RESPONSE)\t{msg}')
