@@ -108,6 +108,9 @@ class CoAP:
 
     # Message codes
     CODE_EMPTY = 0
+    CODE_GET = 1
+    CODE_POST = 2
+    CODE_DELETE = 4
 
     # Response code translation
     RESPONSE_CODE = {

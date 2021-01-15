@@ -144,8 +144,8 @@ class Client:
             self.display_message(msg)
         elif coap_response.msg_class == CoAP.CLASS_METHOD:
             # Method class is not a valid response class
-            msg = f'Invalid response code: {response_code}'
-            self.logger.error(msg)
+            msg = f'Invalid code: {response_code}'
+            self.logger.error(f'(RESPONSE)\t{msg}')
             self.display_message_callback(msg, color='orange3')
         else:
             # Other response classes not recognized/implemented

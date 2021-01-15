@@ -1,6 +1,7 @@
 import abc
 from typing import Callable
 
+from src.client.coap_message import CoAP
 from src.parser.fs_parser import FSParser
 
 
@@ -54,12 +55,7 @@ class BackCommand(FSCommand):
     Class that implements the BACK command.
     Allows the user to go to the previous directory.
 
-    CoAP format:
-        class = 0x1 (Method)
-
-        code = 0x1 (GET)
-
-        payload = <CMD_BACK><dir_name>
+    CoAP payload = <CMD_BACK><dir_name>
     """
 
     def __init__(self, current_dir_name: str, callback: Callable = None):
@@ -68,11 +64,11 @@ class BackCommand(FSCommand):
 
     @staticmethod
     def get_coap_class() -> int:
-        return 0x0
+        return CoAP.CLASS_METHOD
 
     @staticmethod
     def get_coap_code() -> int:
-        return 0x1
+        return CoAP.CODE_GET
 
     @property
     def coap_payload(self) -> str:
@@ -90,12 +86,7 @@ class OpenCommand(FSCommand):
     Class that implements the OPEN command.
     Allows the user to open a directory or file.
 
-    CoAP format:
-        class = 0x1 (Method)
-
-        code = 0x1 (GET)
-
-        payload = <CMD_OPEN><component_name>
+    CoAP payload = <CMD_OPEN><component_name>
     """
 
     def __init__(self, component_name: str, callback: Callable = None):
@@ -104,11 +95,11 @@ class OpenCommand(FSCommand):
 
     @staticmethod
     def get_coap_class() -> int:
-        return 0x0
+        return CoAP.CLASS_METHOD
 
     @staticmethod
     def get_coap_code() -> int:
-        return 0x1
+        return CoAP.CODE_GET
 
     @property
     def coap_payload(self) -> str:
@@ -126,12 +117,7 @@ class SaveCommand(FSCommand):
     Class that implements the SAVE command.
     Allows the user to save the state of the opened file.
 
-    CoAP format:
-        class = 0x1 (Method)
-
-        code = 0x2 (POST)
-
-        payload = <CMD_SAVE><file_name>0x0<file_content>
+    CoAP payload = <CMD_SAVE><file_name>\x00<file_content>
     """
 
     def __init__(self, file_name: str, content: str, callback: Callable = None):
@@ -141,11 +127,11 @@ class SaveCommand(FSCommand):
 
     @staticmethod
     def get_coap_class() -> int:
-        return 0x0
+        return CoAP.CLASS_METHOD
 
     @staticmethod
     def get_coap_code() -> int:
-        return 0x1
+        return CoAP.CODE_POST
 
     @property
     def coap_payload(self) -> str:
@@ -162,12 +148,7 @@ class NewFileCommand(FSCommand):
     Class that implements the NEW FILE command.
     Allows the user to create a file in the current directory.
 
-    CoAP format:
-        class = 0x1 (Method)
-
-        code = 0x2 (POST)
-
-        payload = <CMD_NEWF><file_name>
+    CoAP payload = <CMD_NEWF><file_name>
     """
 
     def __init__(self, new_file_name: str, callback: Callable = None):
@@ -176,11 +157,11 @@ class NewFileCommand(FSCommand):
 
     @staticmethod
     def get_coap_class() -> int:
-        return 0x0
+        return CoAP.CLASS_METHOD
 
     @staticmethod
     def get_coap_code() -> int:
-        return 0x1
+        return CoAP.CODE_POST
 
     @property
     def coap_payload(self) -> str:
@@ -197,12 +178,7 @@ class NewDirCommand(FSCommand):
     Class that implements the NEW DIR command.
     Allows the user to create a directory in the current directory.
 
-    CoAP format:
-        class = 0x1 (Method)
-
-        code = 0x2 (POST)
-
-        payload = <CMD_NEWD><dir_name>
+    CoAP payload = <CMD_NEWD><dir_name>
     """
 
     def __init__(self, new_dir_name: str, callback: Callable = None):
@@ -211,11 +187,11 @@ class NewDirCommand(FSCommand):
 
     @staticmethod
     def get_coap_class() -> int:
-        return 0x0
+        return CoAP.CLASS_METHOD
 
     @staticmethod
     def get_coap_code() -> int:
-        return 0x1
+        return CoAP.CODE_POST
 
     @property
     def coap_payload(self) -> str:
@@ -232,12 +208,7 @@ class DeleteCommand(FSCommand):
     Class that implements the DELETE command.
     Allows the user to delete the specified component.
 
-    CoAP format:
-        class = 0x1 (Method)
-
-        code = 0x4 (DELETE)
-
-        payload = <CMD_DEL><component_name>
+    CoAP payload = <CMD_DEL><component_name>
     """
 
     def __init__(self, component_name: str, callback: Callable = None):
@@ -246,11 +217,11 @@ class DeleteCommand(FSCommand):
 
     @staticmethod
     def get_coap_class() -> int:
-        return 0x0
+        return CoAP.CLASS_METHOD
 
     @staticmethod
     def get_coap_code() -> int:
-        return 0x1
+        return CoAP.CODE_DELETE
 
     @property
     def coap_payload(self) -> str:
