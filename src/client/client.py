@@ -129,7 +129,6 @@ class Client:
             self.logger.info(f'(RESPONSE)\tReset')
             self.msg_queue.put(cmd)
             return
-
         response_code = 100 * coap_response.msg_class + coap_response.msg_code
         if coap_response.msg_class == CoAP.CLASS_SUCCESS:
             self.logger.info(f'(RESPONSE)\t{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}')
@@ -138,11 +137,16 @@ class Client:
                 cmd.exec(coap_response.payload)
             except InvalidFormat as e:
                 self.display_message(f'Incorrect server data: {e.msg}', duration=3)
-        elif coap_response.msg_class == CoAP.CLASS_CERROR or coap_response.msg_class == CoAP.CLASS_SERROR:
+        elif coap_response.msg_class in (CoAP.CLASS_CERROR, CoAP.CLASS_SERROR):
             # Client or Server error
             msg = f'{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}'
             self.logger.error(f'(RESPONSE)\t{msg}')
             self.display_message(msg)
+        elif coap_response.msg_class == CoAP.CLASS_METHOD:
+            # Method class is not a valid response class
+            msg = f'Invalid response code: {response_code}'
+            self.logger.error(msg)
+            self.display_message_callback(msg, color='orange3')
         else:
             # Other response classes not recognized/implemented
             msg = f'Unknown code: {response_code}'

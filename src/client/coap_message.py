@@ -46,6 +46,7 @@ class CoAPMessage:
         msg_code = (header_bytes[1] >> 0) & 0x1F
         msg_id = (header_bytes[2] << 8) | header_bytes[3]
 
+        # Check if the header has reserved field values
         if header_version not in CoAP.VALID_VERSIONS:
             raise InvalidFormat("Message has incorrect CoAP header version")
         elif 9 <= token_length <= 15:
@@ -55,12 +56,11 @@ class CoAPMessage:
 
         # Check special message types/classes/codes
         if (msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY) or msg_type == CoAP.TYPE_RESET:
-            # Messages of such type must be emtpy
+            # This message must be EMPTY
             if not CoAPMessage.is_empty(msg_class, msg_code, token_length, data_bytes):
                 raise InvalidFormat("Incorrect format for EMPTY CoAP message")
-            # Empty message must be confirmable
-            if msg_type == CoAP.TYPE_CONF:
-                raise InvalidFormat("Non-confirmable CoAP message cannot be EMPTY")
+            if msg_type == CoAP.TYPE_NON_CONF:
+                raise InvalidFormat("EMPTY CoAP message cannot be non-confirmable")
 
         token = 0x0
         if token_length:
@@ -71,7 +71,8 @@ class CoAPMessage:
 
     @staticmethod
     def is_empty(msg_class: int, msg_code: int, token_length: int, data_bytes: bytes) -> bool:
-        return msg_class == 0x0 and msg_code == 0x0 and token_length == 0x0 and len(data_bytes) == 4
+        return msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY \
+               and token_length == 0x0 and len(data_bytes) == 4
 
 
 class CoAP:
