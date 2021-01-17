@@ -99,11 +99,12 @@ class Client:
                     # Ignore responses with incorrect token
                     coap_response = self.recv_message()
                 if self.confirmation_req and self.last_msg_id != coap_response.msg_id:
-                    raise InvalidResponse("Acknowledge message id did not match")
+                    raise InvalidResponse('Acknowledge message id did not match')
                 # All good - return message
                 return coap_response
             except socket.timeout:
-                self.logger.error("(TIMEOUT)\tServer not responding")
+                self.logger.error('(TIMEOUT)\tServer not responding')
+                self.display_message('Server not responding')
             except InvalidResponse as e:
                 self.logger.error(e)
                 # Received messsage was incorrect - try to resend
@@ -111,7 +112,7 @@ class Client:
                 if attempts > 0:
                     send_again = True
                 else:
-                    self.logger.error("Too many invalid responses - abandonning retransmission")
+                    self.logger.error('Too many invalid responses - abandonning retransmission')
         # Something wrong - return nothing
         return None
 
@@ -144,12 +145,12 @@ class Client:
             self.display_message(msg)
         elif coap_response.msg_class == CoAP.CLASS_METHOD:
             # Method class is not a valid response class
-            msg = f'Invalid code: {response_code}'
+            msg = f'Invalid response code: {response_code}'
             self.logger.error(f'(RESPONSE)\t{msg}')
-            self.display_message_callback(msg, color='orange3')
+            self.display_message_callback(msg)
         else:
             # Other response classes not recognized/implemented
-            msg = f'Unknown code: {response_code}'
+            msg = f'Unknown response code: {response_code}'
             self.logger.warning(f'(RESPONSE)\t{msg}')
             self.display_message(msg, color='orange3')
 
