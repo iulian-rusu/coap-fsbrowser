@@ -58,19 +58,27 @@ class Client:
                 # No commands for now, check client state and try again
                 continue
             # Build CoAP message out of command and send it
-            msg_type = CoAP.TYPE_CONF if self.confirmation_required else CoAP.TYPE_NON_CONF
-            msg_class = cmd.get_coap_class()
-            msg_code = cmd.get_coap_code()
-            payload = cmd.coap_payload
+            coap_msg = self.command_to_coap(cmd)
             if self.confirmation_required or cmd.response_required():
-                coap_response = self.send_and_receive(payload=payload, msg_class=msg_class,
-                                                      msg_code=msg_code, msg_type=msg_type)
+                coap_response = self.send_and_receive(coap_msg)
                 if coap_response:
                     self.process_response(coap_response, cmd)
             else:
+                self.send_message(coap_msg)
                 cmd.exec(response_data='')
 
-    def send_and_receive(self, payload: str, msg_type: int, msg_class: int, msg_code: int) -> Optional[CoAPMessage]:
+    def command_to_coap(self, cmd: FSCommand) -> CoAPMessage:
+        msg_type = CoAP.TYPE_CONF if self.confirmation_required else CoAP.TYPE_NON_CONF
+        msg_class = cmd.get_coap_class()
+        msg_code = cmd.get_coap_code()
+        payload = cmd.coap_payload
+        self.last_msg_id += 1
+        self.last_token = Client.generate_token()
+        token_length = int(math.ceil(math.log(self.last_token, 8)))
+        return CoAPMessage(payload=payload, msg_type=msg_type, msg_class=msg_class, msg_code=msg_code,
+                           msg_id=self.last_msg_id, token_length=token_length, token=self.last_token)
+
+    def send_and_receive(self, coap_msg: CoAPMessage) -> Optional[CoAPMessage]:
         """
         Sends a CoAP message to the server until the received response is correct or until the client
         runs out of resend attempts.
@@ -80,17 +88,9 @@ class Client:
         If the server does not send any response during the socket timeout period, the transmission will be aborted.
         Received messages without a matching token are considered irrelevant and are ignored.
 
-        :param payload: The payload (body) of the message to be sent.
-        :param msg_type: The type of the message to be sent.
-        :param msg_class: The class of the message to be sent.
-        :param msg_code: The code of the message to be sent.
+        :param coap_msg: The message to be sent.
         :return: Optional[CoAPMessage] - returns None in case of errors.
         """
-        self.last_msg_id += 1
-        self.last_token = Client.generate_token()
-        token_length = int(math.ceil(math.log(self.last_token, 8)))
-        coap_msg = CoAPMessage(payload=payload, msg_type=msg_type, msg_class=msg_class, msg_code=msg_code,
-                               msg_id=self.last_msg_id, token_length=token_length, token=self.last_token)
         send_again = True
         attempts = Client.MAX_RESEND_ATTEMPTS
         while send_again:

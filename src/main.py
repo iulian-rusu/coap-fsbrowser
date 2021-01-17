@@ -7,3 +7,5 @@ if __name__ == '__main__':
 
     app = AppRoot()
     app.mainloop()
+
+    my_server.stop()
