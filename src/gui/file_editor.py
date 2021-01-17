@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from src.command.command import SaveCommand
+from src.client.command import SaveCommand
 from src.file_system.file_system import File, FileContent
 
 

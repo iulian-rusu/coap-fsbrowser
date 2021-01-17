@@ -43,6 +43,8 @@ class FSParser:
 
     @staticmethod
     def parse(string: str) -> FSComponent:
+        if len(string) == 0:
+            raise InvalidFormat("Expected file system component, got empty string")
         if string[0] == 'f':
             return FileParser.parse(string)
         elif string[0] == 'd':

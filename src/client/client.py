@@ -7,7 +7,7 @@ from typing import Optional
 
 from src.client.exceptions import InvalidResponse, InvalidFormat
 from src.client.coap_message import CoAPMessage, CoAP
-from src.command.command import FSCommand
+from src.client.command import FSCommand
 
 
 class Client:
@@ -30,7 +30,7 @@ class Client:
         self.msg_queue = msg_queue
         self.last_msg_id = 0
         self.last_token = None
-        self.confirmation_req = False
+        self.confirmation_required = False
         self.is_running = False
         # Callable used to asychronously display client messages in the GUI
         self.display_message_callback = None
@@ -58,23 +58,26 @@ class Client:
                 # No commands for now, check client state and try again
                 continue
             # Build CoAP message out of command and send it
-            msg_type = CoAP.TYPE_CONF if self.confirmation_req else CoAP.TYPE_NON_CONF
+            msg_type = CoAP.TYPE_CONF if self.confirmation_required else CoAP.TYPE_NON_CONF
             msg_class = cmd.get_coap_class()
             msg_code = cmd.get_coap_code()
             payload = cmd.coap_payload
-            coap_response = self.send_and_receive(payload=payload, msg_class=msg_class,
-                                                  msg_code=msg_code, msg_type=msg_type)
-            if coap_response:
-                self.process_response(coap_response, cmd)
+            if self.confirmation_required or cmd.response_required():
+                coap_response = self.send_and_receive(payload=payload, msg_class=msg_class,
+                                                      msg_code=msg_code, msg_type=msg_type)
+                if coap_response:
+                    self.process_response(coap_response, cmd)
+            else:
+                cmd.exec(response_data='')
 
     def send_and_receive(self, payload: str, msg_type: int, msg_class: int, msg_code: int) -> Optional[CoAPMessage]:
         """
-        Sends a CoAP message to the server until the received response is correct or until the client runs out of
-        resend attempts.
+        Sends a CoAP message to the server until the received response is correct or until the client
+        runs out of resend attempts.
         A correct response has a matching token. In case of confirmable messages, the acknowledge is transmitted with a
         piggybacked response. Any incorrect response will trigger a retransmission attempt, up to a set maximum amount
         of retransmissions.
-        If the server does not send any response during the socket timoeut period, the transmission will be aborted.
+        If the server does not send any response during the socket timeout period, the transmission will be aborted.
         Received messages without a matching token are considered irrelevant and are ignored.
 
         :param payload: The payload (body) of the message to be sent.
@@ -98,7 +101,7 @@ class Client:
                 while self.last_token != coap_response.token:
                     # Ignore responses with incorrect token
                     coap_response = self.recv_message()
-                if self.confirmation_req and self.last_msg_id != coap_response.msg_id:
+                if not (coap_response.msg_type == CoAP.TYPE_ACK and self.last_msg_id == coap_response.msg_id):
                     raise InvalidResponse('Acknowledge message id did not match')
                 # All good - return message
                 return coap_response

@@ -2,7 +2,7 @@ import abc
 from typing import Callable
 
 from src.client.coap_message import CoAP
-from src.parser.fs_parser import FSParser
+from src.file_system.fs_parser import FSParser
 
 
 class FSCommand(metaclass=abc.ABCMeta):
@@ -32,6 +32,11 @@ class FSCommand(metaclass=abc.ABCMeta):
     @staticmethod
     @abc.abstractmethod
     def get_coap_code() -> int:
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def response_required() -> bool:
         pass
 
     @property
@@ -70,6 +75,10 @@ class BackCommand(FSCommand):
     def get_coap_code() -> int:
         return CoAP.CODE_GET
 
+    @staticmethod
+    def response_required() -> bool:
+        return True
+
     @property
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_BACK}{self.current_dir_name}'
@@ -100,6 +109,10 @@ class OpenCommand(FSCommand):
     @staticmethod
     def get_coap_code() -> int:
         return CoAP.CODE_GET
+
+    @staticmethod
+    def response_required() -> bool:
+        return True
 
     @property
     def coap_payload(self) -> str:
@@ -133,6 +146,10 @@ class SaveCommand(FSCommand):
     def get_coap_code() -> int:
         return CoAP.CODE_POST
 
+    @staticmethod
+    def response_required() -> bool:
+        return False
+
     @property
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_SAVE}{self.file_name}\x00{self.content}'
@@ -162,6 +179,10 @@ class NewFileCommand(FSCommand):
     @staticmethod
     def get_coap_code() -> int:
         return CoAP.CODE_POST
+
+    @staticmethod
+    def response_required() -> bool:
+        return False
 
     @property
     def coap_payload(self) -> str:
@@ -193,6 +214,10 @@ class NewDirCommand(FSCommand):
     def get_coap_code() -> int:
         return CoAP.CODE_POST
 
+    @staticmethod
+    def response_required() -> bool:
+        return False
+
     @property
     def coap_payload(self) -> str:
         return f'{FSCommand.CMD_NEWD}{self.new_dir_name}'
@@ -222,6 +247,10 @@ class DeleteCommand(FSCommand):
     @staticmethod
     def get_coap_code() -> int:
         return CoAP.CODE_DELETE
+
+    @staticmethod
+    def response_required() -> bool:
+        return False
 
     @property
     def coap_payload(self) -> str:

@@ -51,8 +51,6 @@ class CoAPMessage:
             raise InvalidFormat("Message has incorrect CoAP header version")
         elif 9 <= token_length <= 15:
             raise InvalidFormat("Message has incorrect CoAP token length")
-        elif msg_class in CoAP.CLASS_RESERVED:
-            raise InvalidFormat("Message uses reserved CoAP message class")
 
         # Check special message types/classes/codes
         if (msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY) or msg_type == CoAP.TYPE_RESET:
@@ -106,7 +104,7 @@ class CoAP:
     CLASS_SERROR = 5
     CLASS_RESERVED = (1, 6, 7)
 
-    # Message codes
+    # Method codes
     CODE_EMPTY = 0
     CODE_GET = 1
     CODE_POST = 2

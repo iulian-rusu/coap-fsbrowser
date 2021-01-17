@@ -3,7 +3,7 @@ import queue
 import threading
 import tkinter as tk
 from src.client.client import Client
-from src.command.command import FSCommand
+from src.client.command import FSCommand
 from src.gui.browser_page import BrowserPage
 from src.gui.connection_page import ConnectionPage
 
@@ -56,7 +56,7 @@ class AppRoot(tk.Tk):
 
     def set_message_confirmation(self, is_confirmable: bool):
         if self.client:
-            self.client.confirmation_req = is_confirmable
+            self.client.confirmation_required = is_confirmable
 
     def send_to_client(self, cmd: FSCommand):
         self.msg_queue.put(cmd)

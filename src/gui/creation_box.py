@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from src.command.command import NewFileCommand, NewDirCommand
+from src.client.command import NewFileCommand, NewDirCommand
 from src.file_system.file_system import File, Directory
 
 

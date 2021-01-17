@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
-from src.command.command import FSCommand, OpenCommand, BackCommand, DeleteCommand
+from src.client.command import FSCommand, OpenCommand, BackCommand, DeleteCommand
 from src.file_system.file_system import FSNamedComponent, File, Directory, FSComponent, FileContent
 from src.gui.creation_box import CreationBox
 from src.gui.base_page import BasePage
