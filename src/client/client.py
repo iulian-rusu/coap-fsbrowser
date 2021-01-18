@@ -59,7 +59,7 @@ class Client:
                 continue
             # Build CoAP message out of command and send it
             coap_msg = self.command_to_coap(cmd)
-            if self.confirmation_required or cmd.response_required():
+            if coap_msg.msg_type == CoAP.TYPE_CONF or cmd.response_required():
                 coap_response = self.send_and_receive(coap_msg)
                 if coap_response:
                     self.process_response(coap_response, cmd)
@@ -68,13 +68,19 @@ class Client:
                 cmd.exec(response_data='')
 
     def command_to_coap(self, cmd: FSCommand) -> CoAPMessage:
-        msg_type = CoAP.TYPE_CONF if self.confirmation_required else CoAP.TYPE_NON_CONF
+        if self.confirmation_required or cmd.confirmation_required():
+            msg_type = CoAP.TYPE_CONF
+        else:
+            msg_type = CoAP.TYPE_NON_CONF
         msg_class = cmd.get_coap_class()
         msg_code = cmd.get_coap_code()
         payload = cmd.coap_payload
         self.last_msg_id += 1
-        self.last_token = Client.generate_token()
-        token_length = int(math.ceil(math.log(self.last_token, 8)))
+        if msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY:
+            token_length = 0
+        else:
+            self.last_token = Client.generate_token()
+            token_length = int(math.ceil(math.log(self.last_token, 8)))
         return CoAPMessage(payload=payload, msg_type=msg_type, msg_class=msg_class, msg_code=msg_code,
                            msg_id=self.last_msg_id, token_length=token_length, token=self.last_token)
 
@@ -98,8 +104,8 @@ class Client:
             self.send_message(coap_msg)
             try:
                 coap_response = self.recv_message()
-                while self.last_token != coap_response.token:
-                    # Ignore responses with incorrect token
+                while coap_response.token_length > 0 and self.last_token != coap_response.token:
+                    # Receive responses until the token matches or there is no token
                     coap_response = self.recv_message()
                 if not (coap_response.msg_type == CoAP.TYPE_ACK and self.last_msg_id == coap_response.msg_id):
                     raise InvalidResponse('Acknowledge message id did not match')
@@ -178,4 +184,4 @@ class Client:
 
     @staticmethod
     def generate_token() -> int:
-        return random.randint(0, 65536)
+        return random.randint(0, 0xFFFF)

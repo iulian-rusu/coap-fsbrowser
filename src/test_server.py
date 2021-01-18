@@ -53,6 +53,12 @@ class TestServer:
     def gen_responses() -> Iterator[CoAPMessage]:
         # Scenario
         response_list = [
+            # Acknowledge to ping
+            CoAPMessage(payload='',
+                        msg_type=CoAP.TYPE_ACK,
+                        msg_class=CoAP.CLASS_SUCCESS,
+                        msg_code=3,
+                        msg_id=0),
             # Open home directory
             CoAPMessage(payload='d/home/rcp\x00dDocuments\x00dDownloads\x00dDesktop\x00dMusic'
                                 '\x00fsecrets.txt\x00ferror.log\x00frandom.txt\x00fmain.py\x00dWork',

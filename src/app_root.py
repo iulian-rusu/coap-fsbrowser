@@ -3,7 +3,7 @@ import queue
 import threading
 import tkinter as tk
 from src.client.client import Client
-from src.client.command import FSCommand
+from src.client.command import FSCommand, PingCommand
 from src.gui.browser_page import BrowserPage
 from src.gui.connection_page import ConnectionPage
 
@@ -50,6 +50,7 @@ class AppRoot(tk.Tk):
             self.show_page('browser')
             # Allow the client to display messages on the current page
             self.client.display_message_callback = self.active_page.display_message
+            self.send_to_client(PingCommand())
             self.client.run()
         except OSError as err:
             self.active_page.display_message(err.strerror)

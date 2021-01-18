@@ -15,6 +15,7 @@ class BrowserPage(BasePage):
         BasePage.__init__(self, title, *args, **kwargs)
         self.entries.append(self.path_entry)
         self.components = []
+        self.current_dir_path = ''
         self.selected_component = None
 
     def reset(self):
@@ -56,6 +57,7 @@ class BrowserPage(BasePage):
         self.display_current_dir()
         self.path_entry.delete(0, 'end')
         self.path_entry.insert(tk.END, new_dir.name)
+        self.current_dir_path = new_dir.name
 
     def display_current_dir(self):
         self.component_view.delete(*self.component_view.get_children())
@@ -80,12 +82,12 @@ class BrowserPage(BasePage):
 
     def on_open(self):
         if self.selected_component:
-            cmd = OpenCommand(self.selected_component.name,
+            cmd = OpenCommand(f'{self.current_dir_path}/{self.selected_component.name}',
                               callback=lambda data: self.open_component(self.selected_component, data))
             self.send_to_client(cmd)
 
     def on_back(self):
-        cmd = BackCommand(self.path_entry.get(), callback=self.open_dir)
+        cmd = BackCommand(self.current_dir_path, callback=self.open_dir)
         self.send_to_client(cmd)
 
     def on_new_dir(self):

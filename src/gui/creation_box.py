@@ -23,9 +23,9 @@ class CreationBox(tk.Toplevel):
         if len(name) == 0:
             return
         if self.is_file:
-            cmd = NewFileCommand(new_file_name=name, callback=lambda: self.master.insert_component(File(name)))
+            cmd = NewFileCommand(new_file_path=name, callback=lambda: self.master.insert_component(File(name)))
         else:
-            cmd = NewDirCommand(new_dir_name=name, callback=lambda: self.master.insert_component(Directory(name)))
+            cmd = NewDirCommand(new_dir_path=name, callback=lambda: self.master.insert_component(Directory(name)))
         self.master.send_to_client(cmd)
         self.destroy()
 
