@@ -77,6 +77,7 @@ class Client:
         payload = cmd.coap_payload
         self.last_msg_id += 1
         if msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY:
+            self.last_token = None
             token_length = 0
         else:
             self.last_token = Client.generate_token()
@@ -104,11 +105,14 @@ class Client:
             self.send_message(coap_msg)
             try:
                 coap_response = self.recv_message()
-                while coap_response.token_length > 0 and self.last_token != coap_response.token:
-                    # Receive responses until the token matches or there is no token
+                while self.last_token and self.last_token != coap_response.token:
+                    # If the request had a token, receive responses until the token matches
                     coap_response = self.recv_message()
-                if not (coap_response.msg_type == CoAP.TYPE_ACK and self.last_msg_id == coap_response.msg_id):
-                    raise InvalidResponse('Acknowledge message id did not match')
+                if coap_msg.msg_type == CoAP.TYPE_CONF:
+                    if coap_response.msg_type != CoAP.TYPE_ACK:
+                        raise InvalidResponse('Confirmable message not acknowledged')
+                    elif self.last_msg_id != coap_response.msg_id:
+                        raise InvalidResponse('Acknowledge message ID did not match')
                 # All good - return message
                 return coap_response
             except socket.timeout:
