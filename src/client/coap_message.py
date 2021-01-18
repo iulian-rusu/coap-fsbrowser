@@ -154,7 +154,7 @@ class CoAP:
         header = 0x00
         header |= msg.header_version << CoAP.VERSION
         header |= (0b11 & msg.msg_type) << CoAP.MSG_TYPE
-        header |= msg.token_length << CoAP.TOKEN_LENGTH
+        header |= (0xFF & msg.token_length) << CoAP.TOKEN_LENGTH
         header |= (0b111 & msg.msg_class) << CoAP.MSG_CLASS
         header |= (0x1F & msg.msg_code) << CoAP.MSG_CODE
         header |= (0xFFFF & msg.msg_id) << CoAP.MSG_ID

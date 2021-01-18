@@ -80,7 +80,7 @@ class Client:
             token_length = 0
         else:
             self.last_token = Client.generate_token()
-            token_length = int(math.ceil(math.log(self.last_token, 8)))
+            token_length = int(math.ceil(math.log(self.last_token, 256)))
         return CoAPMessage(payload=payload, msg_type=msg_type, msg_class=msg_class, msg_code=msg_code,
                            msg_id=self.last_msg_id, token_length=token_length, token=self.last_token)
 
@@ -184,4 +184,4 @@ class Client:
 
     @staticmethod
     def generate_token() -> int:
-        return random.randint(0, 0xFFFF)
+        return random.randint(0, 0xFF_FF_FF_FF)

@@ -42,6 +42,7 @@ class TestServer:
             except StopIteration:
                 continue
             print(f"\t\t[SERVER RECEIVED MESSAGE]")
+            print(msg)
             response.msg_id = msg.msg_id
             response.token_length = msg.token_length
             response.token = msg.token
