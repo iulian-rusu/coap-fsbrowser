@@ -48,6 +48,12 @@ class TestServer:
             response.token = msg.token
             print("\t\t[SENDING RESPONSE ...]")
             self.socket_inst.sendto(CoAP.wrap(response), addr)
+            if response.requires_acknowledge():
+                # Client should send acknowledge
+                try:
+                    self.socket_inst.recvfrom(TestServer.MSG_BUFFER_SIZE)
+                except socket.timeout:
+                    continue
         print("\t\t[STOPED TEST SERVER]")
 
     @staticmethod

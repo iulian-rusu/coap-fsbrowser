@@ -56,7 +56,7 @@ class CoAPMessage:
         # Check special message types/classes/codes
         if (msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY) or msg_type == CoAP.TYPE_RESET:
             # This message must be EMPTY
-            if not CoAPMessage.is_empty(msg_class, msg_code, token_length, data_bytes):
+            if not CoAPMessage.is_valid_empty_format(msg_class, msg_code, token_length, data_bytes):
                 raise InvalidFormat("Incorrect format for EMPTY CoAP message")
             if msg_type == CoAP.TYPE_NON_CONF:
                 raise InvalidFormat("EMPTY CoAP message cannot be non-confirmable")
@@ -68,8 +68,15 @@ class CoAPMessage:
         return cls(payload, msg_type, msg_class, msg_code, msg_id,
                    header_version=header_version, token_length=token_length, token=token)
 
+    def is_empty(self):
+        return self.msg_class == CoAP.CLASS_METHOD and self.msg_code == CoAP.CODE_EMPTY \
+               and self.token_length == 0x0 and self.token is None and len(self.payload) == 0
+
+    def requires_acknowledge(self):
+        return self.msg_type == CoAP.TYPE_CONF or (self.msg_type == CoAP.TYPE_ACK and not self.is_empty())
+
     @staticmethod
-    def is_empty(msg_class: int, msg_code: int, token_length: int, data_bytes: bytes) -> bool:
+    def is_valid_empty_format(msg_class: int, msg_code: int, token_length: int, data_bytes: bytes) -> bool:
         return msg_class == CoAP.CLASS_METHOD and msg_code == CoAP.CODE_EMPTY \
                and token_length == 0x0 and len(data_bytes) == 4
 

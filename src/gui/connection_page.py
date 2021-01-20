@@ -28,7 +28,6 @@ class ConnectionPage(BasePage):
 
     def build_gui(self):
         self.addr_entry = tk.Entry(self)
-        self.addr_entry.config(exportselection='false')
         self.addr_entry.place(anchor='nw', relx='0.4', rely='0.4', width='200')
         self.addr_entry.bind('<Return>', lambda e: self.on_connect())
 

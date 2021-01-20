@@ -113,6 +113,8 @@ class Client:
                         raise InvalidResponse('Confirmable message not acknowledged')
                     elif self.last_msg_id != coap_response.msg_id:
                         raise InvalidResponse('Acknowledge message ID did not match')
+                    else:
+                        self.logger.info(f"Request acknowledged")
                 # All good - return message
                 return coap_response
             except socket.timeout:
@@ -143,6 +145,7 @@ class Client:
             self.logger.info(f'(RESPONSE)\tReset')
             self.msg_queue.put(cmd)
             return
+
         response_code = 100 * coap_response.msg_class + coap_response.msg_code
         if coap_response.msg_class == CoAP.CLASS_SUCCESS:
             self.logger.info(f'(RESPONSE)\t{response_code}: {CoAP.RESPONSE_CODE.get(response_code, "Unknown")}')
@@ -167,13 +170,25 @@ class Client:
             self.logger.warning(f'(RESPONSE)\t{msg}')
             self.display_message(msg, color='orange3')
 
+        if coap_response.requires_acknowledge():
+            # Message type is either piggybacked Acknowledge or Confirmable
+            self.acknowledge_response(coap_response)
+
+    def acknowledge_response(self, coap_response: CoAPMessage):
+        ack_for_server = CoAPMessage(payload='', msg_type=CoAP.TYPE_ACK, msg_class=CoAP.CLASS_METHOD,
+                                     msg_code=CoAP.CODE_EMPTY, msg_id=coap_response.msg_id)
+        self.send_message(ack_for_server)
+
     def display_message(self, msg: str, duration: int = 2, color: str = 'red'):
         if self.display_message_callback:
             self.display_message_callback(msg, duration, color)
 
     def send_message(self, coap_msg: CoAPMessage):
         coap_data = CoAP.wrap(coap_msg)
-        self.logger.info(f"(REQUEST)\t{coap_msg.logging_format()}")
+        if coap_msg.msg_type == CoAP.TYPE_ACK:
+            self.logger.info(f"Response acknowledged")
+        else:
+            self.logger.info(f"(REQUEST)\t{coap_msg.logging_format()}")
         self.send_bytes(coap_data, self.server_ip, self.server_port)
 
     def recv_message(self) -> CoAPMessage:
