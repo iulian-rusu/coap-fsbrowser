@@ -59,11 +59,13 @@ class Client:
                 continue
             # Build CoAP message out of command and send it
             coap_msg = self.command_to_coap(cmd)
-            if coap_msg.msg_type == CoAP.TYPE_CONF or cmd.response_required():
+            if coap_msg.msg_type == CoAP.TYPE_CONF or cmd.server_data_required():
                 coap_response = self.send_and_receive(coap_msg)
                 if coap_response:
                     self.process_response(coap_response, cmd)
             else:
+                # This message is neither confirmable nor requires data from the server.
+                # In this case, we simply send it to the server without caring about any response
                 self.send_message(coap_msg)
                 cmd.exec(response_data='')
 
@@ -85,38 +87,45 @@ class Client:
         return CoAPMessage(payload=payload, msg_type=msg_type, msg_class=msg_class, msg_code=msg_code,
                            msg_id=self.last_msg_id, token_length=token_length, token=self.last_token)
 
-    def send_and_receive(self, coap_msg: CoAPMessage) -> Optional[CoAPMessage]:
+    def send_and_receive(self, coap_request: CoAPMessage) -> Optional[CoAPMessage]:
         """
         Sends a CoAP message to the server until the received response is correct or until the client
         runs out of resend attempts.
         A correct response has a matching token. In case of confirmable messages, the acknowledge is transmitted with a
-        piggybacked response. Any incorrect response will trigger a retransmission attempt, up to a set maximum amount
-        of retransmissions.
+        piggybacked response or separately. Any incorrect response will trigger a retransmission attempt, up to a set
+        maximum amount of retransmissions. If the client runs out of retransmissions, the transmission will be aborted.
         If the server does not send any response during the socket timeout period, the transmission will be aborted.
         Received messages without a matching token are considered irrelevant and are ignored.
 
-        :param coap_msg: The message to be sent.
+        :param coap_request: The message to be sent.
         :return: Optional[CoAPMessage] - returns None in case of errors.
         """
         send_again = True
         attempts = Client.MAX_RESEND_ATTEMPTS
         while send_again:
             send_again = False
-            self.send_message(coap_msg)
+            self.send_message(coap_request)
             try:
                 coap_response = self.recv_message()
-                while self.last_token and self.last_token != coap_response.token:
-                    # If the request had a token, receive responses until the token matches
-                    coap_response = self.recv_message()
-                if coap_msg.msg_type == CoAP.TYPE_CONF:
+                if coap_request.msg_type == CoAP.TYPE_NON_CONF:
+                    # Response to Non-Confirmable request
+                    while self.last_token and self.last_token != coap_response.token:
+                        coap_response = self.recv_message()
+                    return coap_response
+                elif coap_request.msg_type == CoAP.TYPE_CONF:
+                    # Acknowledge to Confirmable request
+                    while self.last_msg_id != coap_response.msg_id:
+                        coap_response = self.recv_message()
                     if coap_response.msg_type != CoAP.TYPE_ACK:
                         raise InvalidResponse('Confirmable message not acknowledged')
-                    elif self.last_msg_id != coap_response.msg_id:
-                        raise InvalidResponse('Acknowledge message ID did not match')
                     else:
                         self.logger.info(f"Request acknowledged")
-                # All good - return message
-                return coap_response
+                    if coap_response.is_empty():
+                        # Acknowledge does not carry a piggybacked response - wait for response
+                        coap_response = self.recv_message()
+                        while self.last_token and self.last_token != coap_response.token:
+                            coap_response = self.recv_message()
+                    return coap_response
             except socket.timeout:
                 self.logger.error('(TIMEOUT)\tServer not responding')
                 self.display_message('Server not responding')
@@ -141,7 +150,7 @@ class Client:
         :return: None
         """
         if coap_response.msg_type == CoAP.TYPE_RESET:
-            # Message type is Reset - put the command back in the queue for retransmission
+            # Response type is Reset - put the command back in the queue for retransmission
             self.logger.info(f'(RESPONSE)\tReset')
             self.msg_queue.put(cmd)
             return
@@ -170,8 +179,8 @@ class Client:
             self.logger.warning(f'(RESPONSE)\t{msg}')
             self.display_message(msg, color='orange3')
 
-        if coap_response.requires_acknowledge():
-            # Message type is either piggybacked Acknowledge or Confirmable
+        if coap_response.msg_type == CoAP.TYPE_CONF:
+            # Response type is Confirmable - send an Acknowledge
             self.acknowledge_response(coap_response)
 
     def acknowledge_response(self, coap_response: CoAPMessage):

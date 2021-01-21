@@ -7,7 +7,7 @@ from src.file_system.fs_parser import FSParser
 
 class FSCommand(metaclass=abc.ABCMeta):
     """
-    Interface for a generic command.
+    Interface for a generic File System command.
     Provides infromation about the CoAP header fields associated with the command.
     The constructor receives a callback function that will be called once the command has been executed and
     the data has been received from the server.
@@ -37,7 +37,7 @@ class FSCommand(metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         pass
 
     @staticmethod
@@ -81,7 +81,7 @@ class PingCommand(FSCommand):
         return CoAP.CODE_EMPTY
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return True
 
     @staticmethod
@@ -117,7 +117,7 @@ class BackCommand(FSCommand):
         return CoAP.CODE_GET
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return True
 
     @property
@@ -152,7 +152,7 @@ class OpenCommand(FSCommand):
         return CoAP.CODE_GET
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return True
 
     @property
@@ -188,7 +188,7 @@ class SaveCommand(FSCommand):
         return CoAP.CODE_POST
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return False
 
     @property
@@ -222,7 +222,7 @@ class NewFileCommand(FSCommand):
         return CoAP.CODE_POST
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return False
 
     @property
@@ -256,7 +256,7 @@ class NewDirCommand(FSCommand):
         return CoAP.CODE_POST
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return False
 
     @property
@@ -290,7 +290,7 @@ class DeleteCommand(FSCommand):
         return CoAP.CODE_DELETE
 
     @staticmethod
-    def response_required() -> bool:
+    def server_data_required() -> bool:
         return False
 
     @property

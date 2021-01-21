@@ -90,6 +90,7 @@ class CoAP:
     HEADER_LEN = 4
     VALID_VERSIONS = (1, )
     PAYLOAD_MARKER = b'\xFF'
+    DEFAULT_PORT = 5683
 
     # Field offsets
     VERSION = 0x1E
