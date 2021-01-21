@@ -98,7 +98,7 @@ class BrowserPage(BasePage):
 
     def on_delete(self):
         if self.selected_component:
-            cmd = DeleteCommand(self.selected_component.name,
+            cmd = DeleteCommand(f'{self.current_dir_path}/{self.selected_component.name}',
                                 callback=lambda: self.remove_component(self.selected_component))
             self.send_to_client(cmd)
 

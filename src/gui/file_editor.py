@@ -20,7 +20,8 @@ class FileEditor(tk.Toplevel):
 
     def on_save(self):
         content = self.file_content.get('1.0', tk.END)
-        cmd = SaveCommand(self.target.name, content, callback=lambda: self.set_file_content(content))
+        cmd = SaveCommand(file_path=f'{self.master.current_dir_path}/{self.target.name}',
+                          content=content, callback=lambda: self.set_file_content(content))
         self.master.send_to_client(cmd)
         self.destroy()
 
